@@ -1,4 +1,4 @@
-Link do Notion: https://www.notion.so/HACKATHON-QI-TECH-27b69f3ceb3b807e92c7fab1cbbb922f?source=copy_link
+Link do Notion com imagens e telas: https://www.notion.so/HACKATHON-QI-TECH-27b69f3ceb3b807e92c7fab1cbbb922f?source=copy_link
 
 ## Produto: Venture Debt P2P para SaaS (will.lending)
 
