@@ -31,7 +31,7 @@ function LoginForm() {
       const result = await authClient.signIn.email({
         email,
         password,
-        callbackURL: "/",
+        callbackURL: "/orcamento",
       });
 
       if (result.error) {

@@ -77,3 +77,265 @@ model Verification {
 
   @@map("verification")
 }
+
+model Investidor {
+  id                       String    @id @default(auto()) @map("_id") @db.ObjectId
+  uid_usuario              String?   @unique
+  tipo_pessoa              String?
+  documento_identificacao  String    @unique
+  nome_razao_social        String
+  data_onboarding          DateTime? @default(now())
+  patrimonio_liquido       Float?
+  declaracao_risco         Boolean
+  experiencia_ativos_risco Boolean?
+  modelo_investimento      String
+  fonte_recursos           String?
+  status_kyc               String    @default("PENDENTE")
+  criado_em                DateTime  @default(now())
+  atualizado_em            DateTime  @default(now())
+
+  // Relations
+  dadosBancarios     DadosBancarios[]
+  investimentos      Investimento[]
+  repassesInvestidor RepasseInvestidor[]
+
+  @@map("investidores")
+}
+
+model Tomador {
+  id                       String   @id @default(auto()) @map("_id") @db.ObjectId
+  uid_usuario              String?  @unique
+  cnpj                     String   @unique
+  razao_social             String
+  segmento                 String?
+  estagio_investimento     String
+  produto                  String?
+  conta_bancaria_principal String?
+  plano_uso_fundos         String?
+  status_compliance        String   @default("PENDENTE")
+  criado_em                DateTime @default(now())
+  atualizado_em            DateTime @default(now())
+
+  // Relations
+  historicosFinanceiro HistoricoFinanceiro[]
+  metricasTempoReal    MetricaTempoReal[]
+  metricasMensais      MetricaMensal[]
+  scorings             ScoringTomador[]
+  contratos            ContratoMutuo[]
+  dadosBancarios       DadosBancarios[]
+
+  @@map("tomadores")
+}
+
+model DadosBancarios {
+  id               String    @id @default(auto()) @map("_id") @db.ObjectId
+  usuario_id       String    @db.ObjectId
+  tipo_usuario     String
+  banco            String?
+  agencia          String?
+  conta            String?
+  ispb             String?
+  ultima_validacao DateTime?
+
+  // Relations
+  investidor Investidor? @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+  tomador    Tomador?    @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+
+  @@unique([usuario_id, tipo_usuario])
+  @@map("dados_bancarios")
+}
+
+model HistoricoFinanceiro {
+  id                      String   @id @default(auto()) @map("_id") @db.ObjectId
+  tomador_id              String   @db.ObjectId
+  periodo                 DateTime
+  tipo_relatorio          String?
+  ativo_total             Float?
+  passivo_total           Float?
+  patrimonio_liquido      Float?
+  receita_liquida         Float?
+  custo_aquisicao_cliente Float?
+  obrigacoes_divida       String?
+  valor_total_dividas     Float?
+  fonte_dados             String?
+  verificado_por          String?
+  criado_em               DateTime @default(now())
+
+  // Relations
+  tomador Tomador @relation(fields: [tomador_id], references: [id], onDelete: Cascade)
+
+  @@index([tomador_id, periodo])
+  @@map("historicos_financeiros")
+}
+
+model MetricaTempoReal {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  tomador_id        String   @db.ObjectId
+  timestamp_captura DateTime @default(now())
+  mrr               Float?
+  nrr               Float?
+  usuarios_ativos   Int?
+  churn_rate        Float?
+  opex_mensal       Float?
+  ltv_cac_ajustado  Float?
+  dscr_ajustado     Float?
+
+  // Relations
+  tomador Tomador @relation(fields: [tomador_id], references: [id], onDelete: Cascade)
+
+  @@index([tomador_id, timestamp_captura])
+  @@map("metricas_tempo_real")
+}
+
+model MetricaMensal {
+  id                            String   @id @default(auto()) @map("_id") @db.ObjectId
+  tomador_id                    String   @db.ObjectId
+  mes_referencia                DateTime
+  mrr_final                     Float?
+  mrr_medio                     Float?
+  nrr_mensal                    Float?
+  investimento_marketing_vendas Float?
+  cac_pago                      Float?
+  ltv_cac_mensal                Float?
+  receita_total                 Float?
+  opex_mensal                   Float?
+  net_burn_mensal               Float?
+  cash_balance_final            Float?
+  cash_runway_meses             Int?
+  churn_rate_medio              Float?
+  dscr_ajustado_mensal          Float?
+  criado_em                     DateTime @default(now())
+
+  // Relations
+  tomador           Tomador           @relation(fields: [tomador_id], references: [id], onDelete: Cascade)
+  contratos         ContratoMutuo[]   @relation("UltimaMetricaContrato")
+  covenantViolacoes CovenantViolado[]
+
+  @@unique([tomador_id, mes_referencia])
+  @@index([tomador_id])
+  @@map("metricas_mensais")
+}
+
+model ScoringTomador {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  tomador_id String?  @db.ObjectId
+  tipo       String
+  escore     Float
+  metodo     String?
+  criado_em  DateTime @default(now())
+  comentario String?
+
+  // Relations
+  tomador Tomador? @relation(fields: [tomador_id], references: [id], onDelete: Cascade)
+
+  @@index([tomador_id, criado_em])
+  @@map("scorings_tomador")
+}
+
+model ContratoMutuo {
+  id                       String    @id @default(auto()) @map("_id") @db.ObjectId
+  tomador_id               String    @db.ObjectId
+  valor_principal          Float
+  multiplo_cap             Float
+  percentual_mrr           Float
+  valor_minimo_funding     Float?
+  data_inicio              DateTime
+  data_fim_prevista        DateTime?
+  status_funding           String    @default("ABERTO")
+  status_contrato          String    @default("ATIVO")
+  covenants_ativos         String?
+  ultima_metrica_mensal_id String?   @db.ObjectId
+
+  // Relations
+  tomador               Tomador           @relation(fields: [tomador_id], references: [id], onDelete: Cascade)
+  ultima_metrica_mensal MetricaMensal?    @relation("UltimaMetricaContrato", fields: [ultima_metrica_mensal_id], references: [id])
+  covenantViolacoes     CovenantViolado[]
+  investimentos         Investimento[]
+  repagamentos          Repagamento[]
+
+  @@index([tomador_id, status_contrato])
+  @@map("contratos_mutuo")
+}
+
+model CovenantViolado {
+  id                String    @id @default(auto()) @map("_id") @db.ObjectId
+  contrato_id       String    @db.ObjectId
+  metrica_mensal_id String    @db.ObjectId
+  tipo_violacao     String?
+  descricao         String?
+  data_violacao     DateTime?
+
+  // Relations
+  contrato       ContratoMutuo @relation(fields: [contrato_id], references: [id], onDelete: Cascade)
+  metrica_mensal MetricaMensal @relation(fields: [metrica_mensal_id], references: [id], onDelete: Cascade)
+
+  @@index([contrato_id, data_violacao])
+  @@map("covenants_violados")
+}
+
+model Investimento {
+  id             String @id @default(auto()) @map("_id") @db.ObjectId
+  contrato_id    String @db.ObjectId
+  investidor_id  String @db.ObjectId
+  valor_aportado Float
+
+  // Relations
+  contrato   ContratoMutuo @relation(fields: [contrato_id], references: [id], onDelete: Cascade)
+  investidor Investidor    @relation(fields: [investidor_id], references: [id], onDelete: Cascade)
+
+  @@unique([contrato_id, investidor_id])
+  @@index([contrato_id])
+  @@index([investidor_id])
+  @@map("investimentos")
+}
+
+model Repagamento {
+  id                   String   @id @default(auto()) @map("_id") @db.ObjectId
+  contrato_id          String   @db.ObjectId
+  data_pagamento       DateTime
+  mrr_periodo          Float?
+  valor_parcela        Float
+  valor_acumulado_pago Float?
+  multiplo_atingido    Float?
+  status               String   @default("PENDENTE")
+
+  // Relations
+  contrato           ContratoMutuo       @relation(fields: [contrato_id], references: [id], onDelete: Cascade)
+  repassesInvestidor RepasseInvestidor[]
+
+  @@index([contrato_id, data_pagamento])
+  @@map("repagamentos")
+}
+
+model RepasseInvestidor {
+  id                  String    @id @default(auto()) @map("_id") @db.ObjectId
+  repagamento_id      String    @db.ObjectId
+  investidor_id       String    @db.ObjectId
+  valor_repasse       Float
+  principal_devolvido Float?
+  retorno_bruto       Float?
+  status              String    @default("PENDENTE")
+  data_execucao       DateTime? @default(now())
+
+  // Relations
+  repagamento Repagamento @relation(fields: [repagamento_id], references: [id], onDelete: Cascade)
+  investidor  Investidor  @relation(fields: [investidor_id], references: [id], onDelete: Cascade)
+
+  @@index([repagamento_id])
+  @@index([investidor_id])
+  @@map("repasses_investidor")
+}
+
+model AuditLog {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  entidade    String
+  entidade_id String
+  acao        String
+  usuario_id  String
+  timestamp   DateTime @default(now())
+  diff        String?
+
+  @@index([entidade, entidade_id])
+  @@index([timestamp])
+  @@map("audit_logs")
+}
