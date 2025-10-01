@@ -1,0 +1,19 @@
+import CadastroForm from './CadastroForm';
+
+function LoginPage() {
+  return ( 
+    <main className="lg:h-screen flex">
+      <div className="w-[55%] h-full flex flex-col gap-8 items-center justify-center">
+        <CadastroForm />
+      </div>
+
+      <div className="login-background h-full w-[45%] flex flex-col items-center py-32">
+        <div className="text-pink-500 flex gap-4">
+          <h1 className="font-bold text-[64px] leading-16">QITech</h1>
+        </div>
+      </div>
+    </main>
+   );
+}
+
+export default LoginPage;
