@@ -8,334 +8,170 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  USER
-  ADMIN
-  SUPER_ADMIN
+model account {
+  id         String   @id @map("_id")
+  accountId  String
+  createdAt  DateTime @db.Date
+  password   String
+  providerId String
+  updatedAt  DateTime @db.Date
+  userId     String
 }
 
-model User {
-  // nao mexer >
-  id            String   @id @default(uuid()) @map("_id")
-  name          String
-  email         String   @unique
-  emailVerified Boolean?
-  image         String?
-  role          Role     @default(USER)
-  // < nao mexer 
+model audit_logs {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  /// Entity name or collection referenced by this audit entry
+  entidade    String?
+  /// ID of the entity referenced by this audit entry (likely an ObjectId)
+  entidade_id String? @db.ObjectId
+  /// When the audit event happened
+  timestamp   DateTime? @db.Date
 
-  createdAt DateTime
-  updatedAt DateTime
-  sessions  Session[]
-  accounts  Account[]
-
-  @@map("user")
+  @@index([entidade, entidade_id])
+  @@index([timestamp])
 }
 
-// evitar mexer daqui pra baixo:
-model Session {
-  id        String   @id @map("_id")
-  expiresAt DateTime
-  token     String
-  createdAt DateTime
-  updatedAt DateTime
-  ipAddress String?
-  userAgent String?
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([token])
-  @@map("session")
-}
-
-model Account {
-  id                    String    @id @map("_id")
-  accountId             String
-  providerId            String
-  userId                String
-  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  accessToken           String?
-  refreshToken          String?
-  idToken               String?
-  accessTokenExpiresAt  DateTime?
-  refreshTokenExpiresAt DateTime?
-  scope                 String?
-  password              String?
-  createdAt             DateTime
-  updatedAt             DateTime
-
-  @@map("account")
-}
-
-model Verification {
-  id         String    @id @map("_id")
-  identifier String
-  value      String
-  expiresAt  DateTime
-  createdAt  DateTime?
-  updatedAt  DateTime?
-
-  @@map("verification")
-}
-
-model Investidor {
-  id                       String    @id @default(auto()) @map("_id") @db.ObjectId
-  uid_usuario              String?   @unique
-  tipo_pessoa              String?
-  documento_identificacao  String    @unique
-  nome_razao_social        String
-  data_onboarding          DateTime? @default(now())
-  patrimonio_liquido       Float?
-  declaracao_risco         Boolean
-  experiencia_ativos_risco Boolean?
-  modelo_investimento      String
-  fonte_recursos           String?
-  status_kyc               String    @default("PENDENTE")
-  criado_em                DateTime  @default(now())
-  atualizado_em            DateTime  @default(now())
-
-  // Relations
-  dadosBancarios     DadosBancarios[]
-  investimentos      Investimento[]
-  repassesInvestidor RepasseInvestidor[]
-
-  @@map("investidores")
-}
-
-model Tomador {
-  id                       String   @id @default(auto()) @map("_id") @db.ObjectId
-  uid_usuario              String?  @unique
-  cnpj                     String   @unique
-  razao_social             String
-  segmento                 String?
-  estagio_investimento     String
-  produto                  String?
-  conta_bancaria_principal String?
-  plano_uso_fundos         String?
-  status_compliance        String   @default("PENDENTE")
-  criado_em                DateTime @default(now())
-  atualizado_em            DateTime @default(now())
-
-  // Relations
-  historicosFinanceiro HistoricoFinanceiro[]
-  metricasTempoReal    MetricaTempoReal[]
-  metricasMensais      MetricaMensal[]
-  scorings             ScoringTomador[]
-  contratos            ContratoMutuo[]
-  dadosBancarios       DadosBancarios[]
-
-  @@map("tomadores")
-}
-
-model DadosBancarios {
-  id               String    @id @default(auto()) @map("_id") @db.ObjectId
-  usuario_id       String    @db.ObjectId
-  tipo_usuario     String
-  banco            String?
-  agencia          String?
-  conta            String?
-  ispb             String?
-  ultima_validacao DateTime?
-
-  // Relations
-  investidor Investidor? @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
-  tomador    Tomador?    @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
-
-  @@unique([usuario_id, tipo_usuario])
-  @@map("dados_bancarios")
-}
-
-model HistoricoFinanceiro {
-  id                      String   @id @default(auto()) @map("_id") @db.ObjectId
-  tomador_id              String   @db.ObjectId
-  periodo                 DateTime
-  tipo_relatorio          String?
-  ativo_total             Float?
-  passivo_total           Float?
-  patrimonio_liquido      Float?
-  receita_liquida         Float?
-  custo_aquisicao_cliente Float?
-  obrigacoes_divida       String?
-  valor_total_dividas     Float?
-  fonte_dados             String?
-  verificado_por          String?
-  criado_em               DateTime @default(now())
-
-  // Relations
-  tomador Tomador @relation(fields: [tomador_id], references: [id], onDelete: Cascade)
-
-  @@index([tomador_id, periodo])
-  @@map("historicos_financeiros")
-}
-
-model MetricaTempoReal {
-  id                String   @id @default(auto()) @map("_id") @db.ObjectId
-  tomador_id        String   @db.ObjectId
-  timestamp_captura DateTime @default(now())
-  mrr               Float?
-  nrr               Float?
-  usuarios_ativos   Int?
-  churn_rate        Float?
-  opex_mensal       Float?
-  ltv_cac_ajustado  Float?
-  dscr_ajustado     Float?
-
-  // Relations
-  tomador Tomador @relation(fields: [tomador_id], references: [id], onDelete: Cascade)
-
-  @@index([tomador_id, timestamp_captura])
-  @@map("metricas_tempo_real")
-}
-
-model MetricaMensal {
-  id                            String   @id @default(auto()) @map("_id") @db.ObjectId
-  tomador_id                    String   @db.ObjectId
-  mes_referencia                DateTime
-  mrr_final                     Float?
-  mrr_medio                     Float?
-  nrr_mensal                    Float?
-  investimento_marketing_vendas Float?
-  cac_pago                      Float?
-  ltv_cac_mensal                Float?
-  receita_total                 Float?
-  opex_mensal                   Float?
-  net_burn_mensal               Float?
-  cash_balance_final            Float?
-  cash_runway_meses             Int?
-  churn_rate_medio              Float?
-  dscr_ajustado_mensal          Float?
-  criado_em                     DateTime @default(now())
-
-  // Relations
-  tomador           Tomador           @relation(fields: [tomador_id], references: [id], onDelete: Cascade)
-  contratos         ContratoMutuo[]   @relation("UltimaMetricaContrato")
-  covenantViolacoes CovenantViolado[]
-
-  @@unique([tomador_id, mes_referencia])
-  @@index([tomador_id])
-  @@map("metricas_mensais")
-}
-
-model ScoringTomador {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  tomador_id String?  @db.ObjectId
-  tipo       String
-  escore     Float
-  metodo     String?
-  criado_em  DateTime @default(now())
-  comentario String?
-
-  // Relations
-  tomador Tomador? @relation(fields: [tomador_id], references: [id], onDelete: Cascade)
-
-  @@index([tomador_id, criado_em])
-  @@map("scorings_tomador")
-}
-
-model ContratoMutuo {
-  id                       String    @id @default(auto()) @map("_id") @db.ObjectId
-  tomador_id               String    @db.ObjectId
-  valor_principal          Float
-  multiplo_cap             Float
-  percentual_mrr           Float
-  valor_minimo_funding     Float?
-  data_inicio              DateTime
-  data_fim_prevista        DateTime?
-  status_funding           String    @default("ABERTO")
-  status_contrato          String    @default("ATIVO")
-  covenants_ativos         String?
-  ultima_metrica_mensal_id String?   @db.ObjectId
-
-  // Relations
-  tomador               Tomador           @relation(fields: [tomador_id], references: [id], onDelete: Cascade)
-  ultima_metrica_mensal MetricaMensal?    @relation("UltimaMetricaContrato", fields: [ultima_metrica_mensal_id], references: [id])
-  covenantViolacoes     CovenantViolado[]
-  investimentos         Investimento[]
-  repagamentos          Repagamento[]
+model contratos_mutuo {
+  id              String @id @default(auto()) @map("_id") @db.ObjectId
+  /// Status of the contract (e.g. draft, funded, active, closed)
+  status_contrato String?
+  /// Reference to `tomadores` (ObjectId)
+  tomador_id      String? @db.ObjectId
 
   @@index([tomador_id, status_contrato])
-  @@map("contratos_mutuo")
 }
 
-model CovenantViolado {
-  id                String    @id @default(auto()) @map("_id") @db.ObjectId
-  contrato_id       String    @db.ObjectId
-  metrica_mensal_id String    @db.ObjectId
-  tipo_violacao     String?
-  descricao         String?
-  data_violacao     DateTime?
-
-  // Relations
-  contrato       ContratoMutuo @relation(fields: [contrato_id], references: [id], onDelete: Cascade)
-  metrica_mensal MetricaMensal @relation(fields: [metrica_mensal_id], references: [id], onDelete: Cascade)
+model covenants_violados {
+  id            String @id @default(auto()) @map("_id") @db.ObjectId
+  /// Reference to `contratos_mutuo` (ObjectId)
+  contrato_id   String? @db.ObjectId
+  /// When the covenant was violated
+  data_violacao DateTime? @db.Date
 
   @@index([contrato_id, data_violacao])
-  @@map("covenants_violados")
 }
 
-model Investimento {
-  id             String @id @default(auto()) @map("_id") @db.ObjectId
-  contrato_id    String @db.ObjectId
-  investidor_id  String @db.ObjectId
-  valor_aportado Float
+model dados_bancarios {
+  id           String @id @default(auto()) @map("_id") @db.ObjectId
+  /// Type of user this banking data belongs to (e.g. 'investidor'|'tomador')
+  tipo_usuario String?
+  /// Reference to user (investidor/tomador) stored as ObjectId
+  usuario_id   String? @db.ObjectId
 
-  // Relations
-  contrato   ContratoMutuo @relation(fields: [contrato_id], references: [id], onDelete: Cascade)
-  investidor Investidor    @relation(fields: [investidor_id], references: [id], onDelete: Cascade)
+  @@unique([usuario_id, tipo_usuario])
+}
+
+model historicos_financeiros {
+  id         String @id @default(auto()) @map("_id") @db.ObjectId
+  /// Period this historical record refers to (month/year)
+  periodo    DateTime? @db.Date
+  /// Reference to `tomadores` (ObjectId)
+  tomador_id String? @db.ObjectId
+
+  @@index([tomador_id, periodo])
+}
+
+model investidores {
+  id                      String @id @default(auto()) @map("_id") @db.ObjectId
+  /// Investor identification document (CPF/CNPJ)
+  documento_identificacao String?  @unique
+  /// Reference to auth/user id (ObjectId)
+  uid_usuario             String?  @db.ObjectId @unique
+}
+
+model investimentos {
+  id            String @id @default(auto()) @map("_id") @db.ObjectId
+  /// Reference to `contratos_mutuo` (ObjectId)
+  contrato_id   String? @db.ObjectId
+  /// Reference to `investidores` (ObjectId)
+  investidor_id String? @db.ObjectId
 
   @@unique([contrato_id, investidor_id])
   @@index([contrato_id])
   @@index([investidor_id])
-  @@map("investimentos")
 }
 
-model Repagamento {
-  id                   String   @id @default(auto()) @map("_id") @db.ObjectId
-  contrato_id          String   @db.ObjectId
-  data_pagamento       DateTime
-  mrr_periodo          Float?
-  valor_parcela        Float
-  valor_acumulado_pago Float?
-  multiplo_atingido    Float?
-  status               String   @default("PENDENTE")
+model metricas_mensais {
+  id             String @id @default(auto()) @map("_id") @db.ObjectId
+  /// Month reference for the metric (use a Date for the month start)
+  mes_referencia DateTime? @db.Date
+  /// Reference to `tomadores` (ObjectId)
+  tomador_id     String? @db.ObjectId
 
-  // Relations
-  contrato           ContratoMutuo       @relation(fields: [contrato_id], references: [id], onDelete: Cascade)
-  repassesInvestidor RepasseInvestidor[]
+  @@unique([tomador_id, mes_referencia])
+  @@index([tomador_id])
+}
+
+model metricas_tempo_real {
+  id                String @id @default(auto()) @map("_id") @db.ObjectId
+  /// When the metric was captured
+  timestamp_captura DateTime? @db.Date
+  /// Reference to `tomadores` (ObjectId)
+  tomador_id        String? @db.ObjectId
+
+  @@index([tomador_id, timestamp_captura])
+}
+
+model repagamentos {
+  id             String @id @default(auto()) @map("_id") @db.ObjectId
+  /// Reference to `contratos_mutuo` (ObjectId)
+  contrato_id    String? @db.ObjectId
+  /// Date when payment happened
+  data_pagamento DateTime? @db.Date
 
   @@index([contrato_id, data_pagamento])
-  @@map("repagamentos")
 }
 
-model RepasseInvestidor {
-  id                  String    @id @default(auto()) @map("_id") @db.ObjectId
-  repagamento_id      String    @db.ObjectId
-  investidor_id       String    @db.ObjectId
-  valor_repasse       Float
-  principal_devolvido Float?
-  retorno_bruto       Float?
-  status              String    @default("PENDENTE")
-  data_execucao       DateTime? @default(now())
-
-  // Relations
-  repagamento Repagamento @relation(fields: [repagamento_id], references: [id], onDelete: Cascade)
-  investidor  Investidor  @relation(fields: [investidor_id], references: [id], onDelete: Cascade)
+model repasses_investidor {
+  id             String @id @default(auto()) @map("_id") @db.ObjectId
+  /// Reference to `investidores` (ObjectId)
+  investidor_id  String? @db.ObjectId
+  /// Reference to `repagamentos` (ObjectId)
+  repagamento_id String? @db.ObjectId
 
   @@index([repagamento_id])
   @@index([investidor_id])
-  @@map("repasses_investidor")
 }
 
-model AuditLog {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  entidade    String
-  entidade_id String
-  acao        String
-  usuario_id  String
-  timestamp   DateTime @default(now())
-  diff        String?
+model scorings_tomador {
+  id         String @id @default(auto()) @map("_id") @db.ObjectId
+  /// When the score was created
+  criado_em  DateTime? @db.Date
+  /// Reference to `tomadores` (ObjectId)
+  tomador_id String? @db.ObjectId
 
-  @@index([entidade, entidade_id])
-  @@index([timestamp])
-  @@map("audit_logs")
+  @@index([tomador_id, criado_em])
+}
+
+model session {
+  id        String   @id @map("_id")
+  createdAt DateTime @db.Date
+  expiresAt DateTime @db.Date
+  ipAddress String
+  token     String   @unique
+  updatedAt DateTime @db.Date
+  userAgent String
+  userId    String
+}
+
+model tomadores {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  /// CNPJ of the borrower
+  cnpj        String?  @unique
+  /// Reference to auth/user id (ObjectId)
+  uid_usuario String?  @db.ObjectId @unique
+}
+
+model user {
+  id            String   @id @map("_id")
+  createdAt     DateTime @db.Date
+  email         String   @unique
+  emailVerified Boolean
+  name          String
+  role          String
+  updatedAt     DateTime @db.Date
+}
+
+model verification {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
 }
