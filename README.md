@@ -1,3 +1,5 @@
+Link do Notion com imagens e telas: https://www.notion.so/HACKATHON-QI-TECH-27b69f3ceb3b807e92c7fab1cbbb922f?source=copy_link
+
 ## Produto: Venture Debt P2P para SaaS (will.lending)
 
 O serviço em questão se trata de uma plataforma **P2P Crowdlending** especializada em **Financiamento Baseado em Receita (RBF) / Venture Debt**, voltada especificamente para o Growth Capital (capital de crescimento) de empresas _SaaS_ em **Série A ou B**.

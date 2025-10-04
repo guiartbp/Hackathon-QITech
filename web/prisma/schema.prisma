@@ -1,44 +1,510 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
 }
 
 datasource db {
-  provider = "mongodb"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  USER
-  ADMIN
-  SUPER_ADMIN
+model Investidor {
+  id                     Int            @id @default(autoincrement())
+  uidUsuario             String         @unique @map("uid_usuario")
+  tipoPessoa             String         @map("tipo_pessoa")
+  documentoIdentificacao String         @unique @map("documento_identificacao")
+  nomeRazaoSocial        String         @map("nome_razao_social")
+  dataOnboarding         DateTime       @default(now()) @map("data_onboarding")
+  patrimonioLiquido      Decimal?       @map("patrimonio_liquido") @db.Decimal(15, 2)
+  declaracaoRisco        Boolean        @default(false) @map("declaracao_risco")
+  experienciaAtivosRisco Boolean?       @default(false) @map("experiencia_ativos_risco")
+  modeloInvestimento     String         @map("modelo_investimento")
+  fonteRecursos          String?        @map("fonte_recursos")
+  statusKyc              String         @default("PENDENTE") @map("status_kyc")
+  criadoEm               DateTime       @default(now()) @map("criado_em")
+  atualizadoEm           DateTime       @default(now()) @updatedAt @map("atualizado_em")
+  investimentos          Investimento[]
+  repasses               Repasse[]
+
+  @@map("investidores")
 }
 
+model Tomador {
+  id               Int      @id @default(autoincrement())
+  uidUsuario       String   @unique @map("uid_usuario")
+  nomeCompleto     String   @map("nome_completo")
+  email            String
+  cargo            String?
+  statusCompliance String   @default("PENDENTE") @map("status_compliance")
+  criadoEm         DateTime @default(now()) @map("criado_em")
+  atualizadoEm     DateTime @default(now()) @updatedAt @map("atualizado_em")
+  empresa          Empresa?
+
+  @@map("tomadores")
+}
+
+model DadosBancarios {
+  id              Int       @id @default(autoincrement())
+  usuarioId       Int       @map("usuario_id")
+  tipoUsuario     String    @map("tipo_usuario")
+  banco           String?
+  agencia         String?
+  conta           String?
+  tipoConta       String?   @map("tipo_conta")
+  ispb            String?
+  isPrincipal     Boolean   @default(false) @map("is_principal")
+  ultimaValidacao DateTime? @map("ultima_validacao")
+  criadoEm        DateTime  @default(now()) @map("criado_em")
+  atualizadoEm    DateTime  @default(now()) @updatedAt @map("atualizado_em")
+
+  @@index([usuarioId, tipoUsuario])
+  @@map("dados_bancarios")
+}
+
+model Empresa {
+  id                  Int                   @id @default(autoincrement())
+  tomadorId           Int                   @unique @map("tomador_id")
+  cnpj                String                @unique
+  razaoSocial         String                @map("razao_social")
+  nomeFantasia        String?               @map("nome_fantasia")
+  website             String?
+  segmento            String?
+  setor               String?
+  estagioInvestimento String?               @map("estagio_investimento")
+  descricaoCurta      String?               @map("descricao_curta")
+  descricaoCompleta   String?               @map("descricao_completa")
+  produto             String?
+  dataFundacao        DateTime?             @map("data_fundacao") @db.Date
+  numeroFuncionarios  Int?                  @map("numero_funcionarios")
+  emoji               String?
+  criadoEm            DateTime              @default(now()) @map("criado_em")
+  atualizadoEm        DateTime              @default(now()) @updatedAt @map("atualizado_em")
+  cohorts             Cohorts[]
+  contratos           Contrato[]
+  tomador             Tomador               @relation(fields: [tomadorId], references: [id], onDelete: Cascade)
+  evolucaoMetricas    EvolucaoMetricas[]
+  historicoFinanceiro HistoricoFinanceiro[]
+  insights            Insight[]
+  metricasMensais     MetricasMensais[]
+  metricasTempoReal   MetricasTempoReal[]
+  mrrPorPlano         MrrPorPlano[]
+  propostas           Proposta[]
+  scores              Score[]
+  topClientes         TopClientes[]
+
+  @@index([tomadorId])
+  @@index([cnpj])
+  @@map("empresas")
+}
+
+model HistoricoFinanceiro {
+  id                    Int      @id @default(autoincrement())
+  empresaId             Int      @map("empresa_id")
+  periodo               DateTime @db.Date
+  tipoRelatorio         String?  @map("tipo_relatorio")
+  ativoTotal            Decimal? @map("ativo_total") @db.Decimal(15, 2)
+  passivoTotal          Decimal? @map("passivo_total") @db.Decimal(15, 2)
+  patrimonioLiquido     Decimal? @map("patrimonio_liquido") @db.Decimal(15, 2)
+  receitaLiquida        Decimal? @map("receita_liquida") @db.Decimal(15, 2)
+  custoAquisicaoCliente Decimal? @map("custo_aquisicao_cliente") @db.Decimal(15, 2)
+  obrigacoesDivida      String?  @map("obrigacoes_divida")
+  valorTotalDividas     Decimal? @map("valor_total_dividas") @db.Decimal(15, 2)
+  fonteDados            String?  @map("fonte_dados")
+  verificadoPor         String?  @map("verificado_por")
+  criadoEm              DateTime @default(now()) @map("criado_em")
+  empresa               Empresa  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  @@index([empresaId, periodo(sort: Desc)])
+  @@map("historico_financeiro")
+}
+
+model MetricasTempoReal {
+  id               Int      @id @default(autoincrement())
+  empresaId        Int      @map("empresa_id")
+  timestampCaptura DateTime @default(now()) @map("timestamp_captura")
+  mrr              Decimal? @db.Decimal(15, 2)
+  arr              Decimal? @db.Decimal(15, 2)
+  nrr              Decimal? @db.Decimal(8, 2)
+  usuariosAtivos   Int?     @map("usuarios_ativos")
+  churnRate        Decimal? @map("churn_rate") @db.Decimal(8, 4)
+  opexMensal       Decimal? @map("opex_mensal") @db.Decimal(15, 2)
+  ltvCacAjustado   Decimal? @map("ltv_cac_ajustado") @db.Decimal(8, 2)
+  dscrAjustado     Decimal? @map("dscr_ajustado") @db.Decimal(8, 2)
+  criadoEm         DateTime @default(now()) @map("criado_em")
+  empresa          Empresa  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  @@index([empresaId, timestampCaptura(sort: Desc)])
+  @@map("metricas_tempo_real")
+}
+
+model MetricasMensais {
+  id                          Int      @id @default(autoincrement())
+  empresaId                   Int      @map("empresa_id")
+  mesReferencia               DateTime @map("mes_referencia") @db.Date
+  mrrFinal                    Decimal? @map("mrr_final") @db.Decimal(15, 2)
+  mrrMedio                    Decimal? @map("mrr_medio") @db.Decimal(15, 2)
+  arrFinal                    Decimal? @map("arr_final") @db.Decimal(15, 2)
+  nrrMensal                   Decimal? @map("nrr_mensal") @db.Decimal(8, 2)
+  numClientesInicio           Int?     @map("num_clientes_inicio")
+  numClientesFinal            Int?     @map("num_clientes_final")
+  novosClientes               Int?     @map("novos_clientes")
+  clientesCancelados          Int?     @map("clientes_cancelados")
+  investimentoMarketingVendas Decimal? @map("investimento_marketing_vendas") @db.Decimal(15, 2)
+  cacPago                     Decimal? @map("cac_pago") @db.Decimal(15, 2)
+  ltvMedio                    Decimal? @map("ltv_medio") @db.Decimal(15, 2)
+  ltvCacRatio                 Decimal? @map("ltv_cac_ratio") @db.Decimal(8, 2)
+  ticketMedio                 Decimal? @map("ticket_medio") @db.Decimal(15, 2)
+  receitaTotal                Decimal? @map("receita_total") @db.Decimal(15, 2)
+  opexMensal                  Decimal? @map("opex_mensal") @db.Decimal(15, 2)
+  netBurnMensal               Decimal? @map("net_burn_mensal") @db.Decimal(15, 2)
+  cashBalanceFinal            Decimal? @map("cash_balance_final") @db.Decimal(15, 2)
+  cashRunwayMeses             Int?     @map("cash_runway_meses")
+  expansionMrr                Decimal? @map("expansion_mrr") @db.Decimal(15, 2)
+  contractionMrr              Decimal? @map("contraction_mrr") @db.Decimal(15, 2)
+  expansionPct                Decimal? @map("expansion_pct") @db.Decimal(8, 2)
+  contractionPct              Decimal? @map("contraction_pct") @db.Decimal(8, 2)
+  churnRateMedio              Decimal? @map("churn_rate_medio") @db.Decimal(8, 4)
+  dscrAjustadoMensal          Decimal? @map("dscr_ajustado_mensal") @db.Decimal(8, 2)
+  margemBruta                 Decimal? @map("margem_bruta") @db.Decimal(8, 2)
+  burnMultiple                Decimal? @map("burn_multiple") @db.Decimal(8, 2)
+  cacPaybackMeses             Int?     @map("cac_payback_meses")
+  magicNumber                 Decimal? @map("magic_number") @db.Decimal(8, 2)
+  criadoEm                    DateTime @default(now()) @map("criado_em")
+  empresa                     Empresa  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  @@unique([empresaId, mesReferencia])
+  @@index([empresaId, mesReferencia(sort: Desc)])
+  @@map("metricas_mensais")
+}
+
+model EvolucaoMetricas {
+  id             Int      @id @default(autoincrement())
+  empresaId      Int      @map("empresa_id")
+  dataReferencia DateTime @map("data_referencia") @db.Date
+  tipoPeriodo    String   @map("tipo_periodo")
+  arr            Decimal? @db.Decimal(15, 2)
+  mrr            Decimal? @db.Decimal(15, 2)
+  numClientes    Int?     @map("num_clientes")
+  criadoEm       DateTime @default(now()) @map("criado_em")
+  empresa        Empresa  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  @@unique([empresaId, dataReferencia, tipoPeriodo])
+  @@index([empresaId, dataReferencia(sort: Desc)])
+  @@map("evolucao_metricas")
+}
+
+model MrrPorPlano {
+  id               Int      @id @default(autoincrement())
+  empresaId        Int      @map("empresa_id")
+  mesReferencia    DateTime @map("mes_referencia") @db.Date
+  nomePlano        String   @map("nome_plano")
+  mrrPlano         Decimal  @map("mrr_plano") @db.Decimal(15, 2)
+  numClientesPlano Int?     @map("num_clientes_plano")
+  percentualTotal  Decimal? @map("percentual_total") @db.Decimal(8, 2)
+  criadoEm         DateTime @default(now()) @map("criado_em")
+  empresa          Empresa  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  @@unique([empresaId, mesReferencia, nomePlano])
+  @@index([empresaId, mesReferencia(sort: Desc)])
+  @@map("mrr_por_plano")
+}
+
+model TopClientes {
+  id                 Int      @id @default(autoincrement())
+  empresaId          Int      @map("empresa_id")
+  mesReferencia      DateTime @map("mes_referencia") @db.Date
+  clienteNome        String   @map("cliente_nome")
+  clienteEmoji       String?  @map("cliente_emoji")
+  plano              String?
+  mrrCliente         Decimal  @map("mrr_cliente") @db.Decimal(15, 2)
+  percentualMrrTotal Decimal? @map("percentual_mrr_total") @db.Decimal(8, 2)
+  criadoEm           DateTime @default(now()) @map("criado_em")
+  empresa            Empresa  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  @@index([empresaId, mesReferencia(sort: Desc)])
+  @@map("top_clientes")
+}
+
+model Cohorts {
+  id               Int      @id @default(autoincrement())
+  empresaId        Int      @map("empresa_id")
+  cohortMes        DateTime @map("cohort_mes") @db.Date
+  clientesIniciais Int      @map("clientes_iniciais")
+  retencaoM0       Decimal  @default(100.00) @map("retencao_m0") @db.Decimal(8, 2)
+  retencaoM1       Decimal? @map("retencao_m1") @db.Decimal(8, 2)
+  retencaoM2       Decimal? @map("retencao_m2") @db.Decimal(8, 2)
+  retencaoM3       Decimal? @map("retencao_m3") @db.Decimal(8, 2)
+  retencaoM6       Decimal? @map("retencao_m6") @db.Decimal(8, 2)
+  retencaoM12      Decimal? @map("retencao_m12") @db.Decimal(8, 2)
+  ltvMedio         Decimal? @map("ltv_medio") @db.Decimal(15, 2)
+  criadoEm         DateTime @default(now()) @map("criado_em")
+  atualizadoEm     DateTime @default(now()) @updatedAt @map("atualizado_em")
+  empresa          Empresa  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  @@unique([empresaId, cohortMes])
+  @@index([empresaId, cohortMes(sort: Desc)])
+  @@map("cohorts")
+}
+
+model Score {
+  id               Int                 @id @default(autoincrement())
+  empresaId        Int                 @map("empresa_id")
+  scoreTotal       Int                 @map("score_total")
+  tier             String
+  variacaoMensal   Int?                @map("variacao_mensal")
+  rankingPercentil Int?                @map("ranking_percentil")
+  tipoScore        String              @map("tipo_score")
+  metodo           String?
+  criadoEm         DateTime            @default(now()) @map("criado_em")
+  categorias       ScoreCategoria[]
+  recomendacoes    ScoreRecomendacao[]
+  empresa          Empresa             @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  @@index([empresaId, criadoEm(sort: Desc)])
+  @@map("scores")
+}
+
+model ScoreCategoria {
+  id             Int            @id @default(autoincrement())
+  scoreId        Int            @map("score_id")
+  categoria      String
+  scoreCategoria Int            @map("score_categoria")
+  criadoEm       DateTime       @default(now()) @map("criado_em")
+  score          Score          @relation(fields: [scoreId], references: [id], onDelete: Cascade)
+  features       ScoreFeature[]
+
+  @@unique([scoreId, categoria])
+  @@map("score_categorias")
+}
+
+model ScoreFeature {
+  id               Int            @id @default(autoincrement())
+  scoreCategoriaId Int            @map("score_categoria_id")
+  featureNome      String         @map("feature_nome")
+  featureValor     Decimal?       @map("feature_valor") @db.Decimal(15, 4)
+  featurePeso      Int?           @map("feature_peso")
+  criadoEm         DateTime       @default(now()) @map("criado_em")
+  scoreCategoria   ScoreCategoria @relation(fields: [scoreCategoriaId], references: [id], onDelete: Cascade)
+
+  @@index([scoreCategoriaId])
+  @@map("score_features")
+}
+
+model ScoreRecomendacao {
+  id              Int      @id @default(autoincrement())
+  scoreId         Int      @map("score_id")
+  titulo          String
+  descricao       String
+  categoria       String
+  impactoEstimado Int?     @map("impacto_estimado")
+  prioridade      Int?
+  criadoEm        DateTime @default(now()) @map("criado_em")
+  score           Score    @relation(fields: [scoreId], references: [id], onDelete: Cascade)
+
+  @@index([scoreId])
+  @@map("score_recomendacoes")
+}
+
+model Insight {
+  id            Int       @id @default(autoincrement())
+  empresaId     Int       @map("empresa_id")
+  tipo          String
+  categoria     String?
+  titulo        String
+  descricao     String
+  isLido        Boolean   @default(false) @map("is_lido")
+  isArquivado   Boolean   @default(false) @map("is_arquivado")
+  dataExpiracao DateTime? @map("data_expiracao")
+  criadoEm      DateTime  @default(now()) @map("criado_em")
+  empresa       Empresa   @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  @@index([empresaId, criadoEm(sort: Desc)])
+  @@index([empresaId, tipo, isLido])
+  @@map("insights")
+}
+
+model Proposta {
+  id                 Int            @id @default(autoincrement())
+  empresaId          Int            @map("empresa_id")
+  valorSolicitado    Decimal        @map("valor_solicitado") @db.Decimal(15, 2)
+  multiploCap        Decimal        @map("multiplo_cap") @db.Decimal(4, 2)
+  percentualMrr      Decimal        @map("percentual_mrr") @db.Decimal(8, 2)
+  duracaoMeses       Int            @map("duracao_meses")
+  valorMinimoFunding Decimal?       @map("valor_minimo_funding") @db.Decimal(15, 2)
+  planoUsoFundos     String?        @map("plano_uso_fundos")
+  statusFunding      String         @default("RASCUNHO") @map("status_funding")
+  valorFinanciado    Decimal        @default(0) @map("valor_financiado") @db.Decimal(15, 2)
+  progressoFunding   Decimal        @default(0) @map("progresso_funding") @db.Decimal(8, 2)
+  dataAbertura       DateTime?      @map("data_abertura")
+  dataFechamento     DateTime?      @map("data_fechamento")
+  diasAberta         Int?           @map("dias_aberta")
+  scoreNaAbertura    Int?           @map("score_na_abertura")
+  criadoEm           DateTime       @default(now()) @map("criado_em")
+  atualizadoEm       DateTime       @default(now()) @updatedAt @map("atualizado_em")
+  contrato           Contrato?
+  investimentos      Investimento[]
+  empresa            Empresa        @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  @@index([empresaId])
+  @@index([statusFunding])
+  @@map("propostas")
+}
+
+model Contrato {
+  id                    Int                 @id @default(autoincrement())
+  propostaId            Int                 @unique @map("proposta_id")
+  empresaId             Int                 @map("empresa_id")
+  valorPrincipal        Decimal             @map("valor_principal") @db.Decimal(15, 2)
+  multiploCap           Decimal             @map("multiplo_cap") @db.Decimal(4, 2)
+  percentualMrr         Decimal             @map("percentual_mrr") @db.Decimal(8, 2)
+  valorTotalDevido      Decimal             @map("valor_total_devido") @db.Decimal(15, 2)
+  dataInicio            DateTime            @map("data_inicio") @db.Date
+  dataFimPrevista       DateTime?           @map("data_fim_prevista") @db.Date
+  dataFimReal           DateTime?           @map("data_fim_real") @db.Date
+  statusContrato        String              @default("ATIVO") @map("status_contrato")
+  valorTotalPago        Decimal             @default(0) @map("valor_total_pago") @db.Decimal(15, 2)
+  percentualPago        Decimal             @default(0) @map("percentual_pago") @db.Decimal(8, 2)
+  multiploAtingido      Decimal             @default(0) @map("multiplo_atingido") @db.Decimal(4, 2)
+  ultimaMetricaMensalId Int?                @map("ultima_metrica_mensal_id")
+  criadoEm              DateTime            @default(now()) @map("criado_em")
+  atualizadoEm          DateTime            @default(now()) @updatedAt @map("atualizado_em")
+  empresa               Empresa             @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  proposta              Proposta            @relation(fields: [propostaId], references: [id], onDelete: Cascade)
+  investimentos         Investimento[]
+  pagamentos            Pagamento[]
+  projecoesPagamento    ProjecaoPagamento[]
+
+  @@index([empresaId])
+  @@index([statusContrato])
+  @@index([propostaId])
+  @@map("contratos")
+}
+
+model Investimento {
+  id                     Int        @id @default(autoincrement())
+  propostaId             Int?       @map("proposta_id")
+  contratoId             Int?       @map("contrato_id")
+  investidorId           Int        @map("investidor_id")
+  valorAportado          Decimal    @map("valor_aportado") @db.Decimal(15, 2)
+  percentualParticipacao Decimal?   @map("percentual_participacao") @db.Decimal(8, 4)
+  statusInvestimento     String     @default("PENDENTE") @map("status_investimento")
+  valorTotalRecebido     Decimal    @default(0) @map("valor_total_recebido") @db.Decimal(15, 2)
+  tirRealizado           Decimal?   @map("tir_realizado") @db.Decimal(8, 2)
+  dataInvestimento       DateTime   @default(now()) @map("data_investimento")
+  contrato               Contrato?  @relation(fields: [contratoId], references: [id], onDelete: Cascade)
+  investidor             Investidor @relation(fields: [investidorId], references: [id], onDelete: Cascade)
+  proposta               Proposta?  @relation(fields: [propostaId], references: [id], onDelete: Cascade)
+  repasses               Repasse[]
+
+  @@index([investidorId])
+  @@index([propostaId])
+  @@index([contratoId])
+  @@map("investimentos")
+}
+
+model Pagamento {
+  id                 Int       @id @default(autoincrement())
+  contratoId         Int       @map("contrato_id")
+  tipoPagamento      String    @map("tipo_pagamento")
+  dataVencimento     DateTime  @map("data_vencimento") @db.Date
+  dataPagamento      DateTime? @map("data_pagamento") @db.Date
+  diasAtraso         Int       @default(0) @map("dias_atraso")
+  mrrPeriodo         Decimal?  @map("mrr_periodo") @db.Decimal(15, 2)
+  valorEsperado      Decimal   @map("valor_esperado") @db.Decimal(15, 2)
+  valorPago          Decimal?  @map("valor_pago") @db.Decimal(15, 2)
+  valorAcumuladoPago Decimal?  @map("valor_acumulado_pago") @db.Decimal(15, 2)
+  multiploAtingido   Decimal?  @map("multiplo_atingido") @db.Decimal(4, 2)
+  status             String    @default("AGENDADO")
+  taxaEfetiva        Decimal?  @map("taxa_efetiva") @db.Decimal(8, 2)
+  metodoPagamento    String?   @map("metodo_pagamento")
+  criadoEm           DateTime  @default(now()) @map("criado_em")
+  atualizadoEm       DateTime  @default(now()) @updatedAt @map("atualizado_em")
+  contrato           Contrato  @relation(fields: [contratoId], references: [id], onDelete: Cascade)
+  repasses           Repasse[]
+
+  @@index([contratoId, dataVencimento])
+  @@index([status, dataVencimento])
+  @@map("pagamentos")
+}
+
+model Repasse {
+  id                 Int          @id @default(autoincrement())
+  pagamentoId        Int          @map("pagamento_id")
+  investimentoId     Int          @map("investimento_id")
+  investidorId       Int          @map("investidor_id")
+  valorRepasse       Decimal      @map("valor_repasse") @db.Decimal(15, 2)
+  principalDevolvido Decimal?     @map("principal_devolvido") @db.Decimal(15, 2)
+  retornoBruto       Decimal?     @map("retorno_bruto") @db.Decimal(15, 2)
+  status             String       @default("PENDENTE")
+  dataExecucao       DateTime?    @map("data_execucao")
+  criadoEm           DateTime     @default(now()) @map("criado_em")
+  investidor         Investidor   @relation(fields: [investidorId], references: [id], onDelete: Cascade)
+  investimento       Investimento @relation(fields: [investimentoId], references: [id], onDelete: Cascade)
+  pagamento          Pagamento    @relation(fields: [pagamentoId], references: [id], onDelete: Cascade)
+
+  @@index([pagamentoId])
+  @@index([investidorId, dataExecucao(sort: Desc)])
+  @@map("repasses")
+}
+
+model ProjecaoPagamento {
+  id             Int      @id @default(autoincrement())
+  contratoId     Int      @map("contrato_id")
+  mesReferencia  DateTime @map("mes_referencia") @db.Date
+  valorProjetado Decimal  @map("valor_projetado") @db.Decimal(15, 2)
+  mrrProjetado   Decimal? @map("mrr_projetado") @db.Decimal(15, 2)
+  confianca      Decimal? @db.Decimal(8, 2)
+  metodoProjecao String?  @map("metodo_projecao")
+  criadoEm       DateTime @default(now()) @map("criado_em")
+  contrato       Contrato @relation(fields: [contratoId], references: [id], onDelete: Cascade)
+
+  @@unique([contratoId, mesReferencia])
+  @@index([contratoId, mesReferencia])
+  @@map("projecoes_pagamento")
+}
+
+model AuditLog {
+  id              Int      @id @default(autoincrement())
+  entidade        String
+  entidadeId      Int      @map("entidade_id")
+  acao            String
+  usuarioId       String   @map("usuario_id")
+  dadosAnteriores Json?    @map("dados_anteriores")
+  dadosNovos      Json?    @map("dados_novos")
+  ipAddress       String?  @map("ip_address")
+  userAgent       String?  @map("user_agent")
+  timestamp       DateTime @default(now())
+
+  @@index([entidade, entidadeId])
+  @@index([usuarioId, timestamp(sort: Desc)])
+  @@index([timestamp(sort: Desc)])
+  @@map("audit_log")
+}
+
+/**
+ * ============= Better auth =============
+ */
+
 model User {
-  // nao mexer >
-  id            String   @id @default(uuid()) @map("_id")
+  id            String    @id @map("_id")
   name          String
-  email         String   @unique
-  emailVerified Boolean?
+  email         String
+  emailVerified Boolean   @default(false)
   image         String?
-  role          Role     @default(USER)
-  // < nao mexer 
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @default(now()) @updatedAt
+  sessions      Session[]
+  accounts      Account[]
 
-  createdAt DateTime
-  updatedAt DateTime
-  sessions  Session[]
-  accounts  Account[]
-
+  @@unique([email])
   @@map("user")
 }
 
-// evitar mexer daqui pra baixo:
 model Session {
   id        String   @id @map("_id")
   expiresAt DateTime
   token     String
-  createdAt DateTime
-  updatedAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   ipAddress String?
   userAgent String?
   userId    String
@@ -61,281 +527,19 @@ model Account {
   refreshTokenExpiresAt DateTime?
   scope                 String?
   password              String?
-  createdAt             DateTime
-  updatedAt             DateTime
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
   @@map("account")
 }
 
 model Verification {
-  id         String    @id @map("_id")
+  id         String   @id @map("_id")
   identifier String
   value      String
   expiresAt  DateTime
-  createdAt  DateTime?
-  updatedAt  DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
 
   @@map("verification")
-}
-
-model Investidor {
-  id                       String    @id @default(auto()) @map("_id") @db.ObjectId
-  uid_usuario              String?   @unique
-  tipo_pessoa              String?
-  documento_identificacao  String    @unique
-  nome_razao_social        String
-  data_onboarding          DateTime? @default(now())
-  patrimonio_liquido       Float?
-  declaracao_risco         Boolean
-  experiencia_ativos_risco Boolean?
-  modelo_investimento      String
-  fonte_recursos           String?
-  status_kyc               String    @default("PENDENTE")
-  criado_em                DateTime  @default(now())
-  atualizado_em            DateTime  @default(now())
-
-  // Relations
-  dadosBancarios     DadosBancarios[]
-  investimentos      Investimento[]
-  repassesInvestidor RepasseInvestidor[]
-
-  @@map("investidores")
-}
-
-model Tomador {
-  id                       String   @id @default(auto()) @map("_id") @db.ObjectId
-  uid_usuario              String?  @unique
-  cnpj                     String   @unique
-  razao_social             String
-  segmento                 String?
-  estagio_investimento     String
-  produto                  String?
-  conta_bancaria_principal String?
-  plano_uso_fundos         String?
-  status_compliance        String   @default("PENDENTE")
-  criado_em                DateTime @default(now())
-  atualizado_em            DateTime @default(now())
-
-  // Relations
-  historicosFinanceiro HistoricoFinanceiro[]
-  metricasTempoReal    MetricaTempoReal[]
-  metricasMensais      MetricaMensal[]
-  scorings             ScoringTomador[]
-  contratos            ContratoMutuo[]
-  dadosBancarios       DadosBancarios[]
-
-  @@map("tomadores")
-}
-
-model DadosBancarios {
-  id               String    @id @default(auto()) @map("_id") @db.ObjectId
-  usuario_id       String    @db.ObjectId
-  tipo_usuario     String
-  banco            String?
-  agencia          String?
-  conta            String?
-  ispb             String?
-  ultima_validacao DateTime?
-
-  // Relations
-  investidor Investidor? @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
-  tomador    Tomador?    @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
-
-  @@unique([usuario_id, tipo_usuario])
-  @@map("dados_bancarios")
-}
-
-model HistoricoFinanceiro {
-  id                      String   @id @default(auto()) @map("_id") @db.ObjectId
-  tomador_id              String   @db.ObjectId
-  periodo                 DateTime
-  tipo_relatorio          String?
-  ativo_total             Float?
-  passivo_total           Float?
-  patrimonio_liquido      Float?
-  receita_liquida         Float?
-  custo_aquisicao_cliente Float?
-  obrigacoes_divida       String?
-  valor_total_dividas     Float?
-  fonte_dados             String?
-  verificado_por          String?
-  criado_em               DateTime @default(now())
-
-  // Relations
-  tomador Tomador @relation(fields: [tomador_id], references: [id], onDelete: Cascade)
-
-  @@index([tomador_id, periodo])
-  @@map("historicos_financeiros")
-}
-
-model MetricaTempoReal {
-  id                String   @id @default(auto()) @map("_id") @db.ObjectId
-  tomador_id        String   @db.ObjectId
-  timestamp_captura DateTime @default(now())
-  mrr               Float?
-  nrr               Float?
-  usuarios_ativos   Int?
-  churn_rate        Float?
-  opex_mensal       Float?
-  ltv_cac_ajustado  Float?
-  dscr_ajustado     Float?
-
-  // Relations
-  tomador Tomador @relation(fields: [tomador_id], references: [id], onDelete: Cascade)
-
-  @@index([tomador_id, timestamp_captura])
-  @@map("metricas_tempo_real")
-}
-
-model MetricaMensal {
-  id                            String   @id @default(auto()) @map("_id") @db.ObjectId
-  tomador_id                    String   @db.ObjectId
-  mes_referencia                DateTime
-  mrr_final                     Float?
-  mrr_medio                     Float?
-  nrr_mensal                    Float?
-  investimento_marketing_vendas Float?
-  cac_pago                      Float?
-  ltv_cac_mensal                Float?
-  receita_total                 Float?
-  opex_mensal                   Float?
-  net_burn_mensal               Float?
-  cash_balance_final            Float?
-  cash_runway_meses             Int?
-  churn_rate_medio              Float?
-  dscr_ajustado_mensal          Float?
-  criado_em                     DateTime @default(now())
-
-  // Relations
-  tomador           Tomador           @relation(fields: [tomador_id], references: [id], onDelete: Cascade)
-  contratos         ContratoMutuo[]   @relation("UltimaMetricaContrato")
-  covenantViolacoes CovenantViolado[]
-
-  @@unique([tomador_id, mes_referencia])
-  @@index([tomador_id])
-  @@map("metricas_mensais")
-}
-
-model ScoringTomador {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  tomador_id String?  @db.ObjectId
-  tipo       String
-  escore     Float
-  metodo     String?
-  criado_em  DateTime @default(now())
-  comentario String?
-
-  // Relations
-  tomador Tomador? @relation(fields: [tomador_id], references: [id], onDelete: Cascade)
-
-  @@index([tomador_id, criado_em])
-  @@map("scorings_tomador")
-}
-
-model ContratoMutuo {
-  id                       String    @id @default(auto()) @map("_id") @db.ObjectId
-  tomador_id               String    @db.ObjectId
-  valor_principal          Float
-  multiplo_cap             Float
-  percentual_mrr           Float
-  valor_minimo_funding     Float?
-  data_inicio              DateTime
-  data_fim_prevista        DateTime?
-  status_funding           String    @default("ABERTO")
-  status_contrato          String    @default("ATIVO")
-  covenants_ativos         String?
-  ultima_metrica_mensal_id String?   @db.ObjectId
-
-  // Relations
-  tomador               Tomador           @relation(fields: [tomador_id], references: [id], onDelete: Cascade)
-  ultima_metrica_mensal MetricaMensal?    @relation("UltimaMetricaContrato", fields: [ultima_metrica_mensal_id], references: [id])
-  covenantViolacoes     CovenantViolado[]
-  investimentos         Investimento[]
-  repagamentos          Repagamento[]
-
-  @@index([tomador_id, status_contrato])
-  @@map("contratos_mutuo")
-}
-
-model CovenantViolado {
-  id                String    @id @default(auto()) @map("_id") @db.ObjectId
-  contrato_id       String    @db.ObjectId
-  metrica_mensal_id String    @db.ObjectId
-  tipo_violacao     String?
-  descricao         String?
-  data_violacao     DateTime?
-
-  // Relations
-  contrato       ContratoMutuo @relation(fields: [contrato_id], references: [id], onDelete: Cascade)
-  metrica_mensal MetricaMensal @relation(fields: [metrica_mensal_id], references: [id], onDelete: Cascade)
-
-  @@index([contrato_id, data_violacao])
-  @@map("covenants_violados")
-}
-
-model Investimento {
-  id             String @id @default(auto()) @map("_id") @db.ObjectId
-  contrato_id    String @db.ObjectId
-  investidor_id  String @db.ObjectId
-  valor_aportado Float
-
-  // Relations
-  contrato   ContratoMutuo @relation(fields: [contrato_id], references: [id], onDelete: Cascade)
-  investidor Investidor    @relation(fields: [investidor_id], references: [id], onDelete: Cascade)
-
-  @@unique([contrato_id, investidor_id])
-  @@index([contrato_id])
-  @@index([investidor_id])
-  @@map("investimentos")
-}
-
-model Repagamento {
-  id                   String   @id @default(auto()) @map("_id") @db.ObjectId
-  contrato_id          String   @db.ObjectId
-  data_pagamento       DateTime
-  mrr_periodo          Float?
-  valor_parcela        Float
-  valor_acumulado_pago Float?
-  multiplo_atingido    Float?
-  status               String   @default("PENDENTE")
-
-  // Relations
-  contrato           ContratoMutuo       @relation(fields: [contrato_id], references: [id], onDelete: Cascade)
-  repassesInvestidor RepasseInvestidor[]
-
-  @@index([contrato_id, data_pagamento])
-  @@map("repagamentos")
-}
-
-model RepasseInvestidor {
-  id                  String    @id @default(auto()) @map("_id") @db.ObjectId
-  repagamento_id      String    @db.ObjectId
-  investidor_id       String    @db.ObjectId
-  valor_repasse       Float
-  principal_devolvido Float?
-  retorno_bruto       Float?
-  status              String    @default("PENDENTE")
-  data_execucao       DateTime? @default(now())
-
-  // Relations
-  repagamento Repagamento @relation(fields: [repagamento_id], references: [id], onDelete: Cascade)
-  investidor  Investidor  @relation(fields: [investidor_id], references: [id], onDelete: Cascade)
-
-  @@index([repagamento_id])
-  @@index([investidor_id])
-  @@map("repasses_investidor")
-}
-
-model AuditLog {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  entidade    String
-  entidade_id String
-  acao        String
-  usuario_id  String
-  timestamp   DateTime @default(now())
-  diff        String?
-
-  @@index([entidade, entidade_id])
-  @@index([timestamp])
-  @@map("audit_logs")
 }
