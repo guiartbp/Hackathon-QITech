@@ -10,10 +10,40 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
 
+interface SimulationData {
+  valor_solicitado: number;
+  multiplo_cap: number;
+  percentual_mrr: number;
+  mrr_atual: number;
+  valor_total_retorno: number;
+  custo_total: number;
+  primeira_parcela: string;
+  projecoes: {
+    cenario: 'conservador' | 'base' | 'otimista';
+    crescimento_mrr_mensal: number;
+    prazo_estimado_meses: number;
+    cronograma: {
+      mes: number;
+      data: string;
+      mrr_projetado: number;
+      valor_parcela: number;
+      acumulado_pago: number;
+      saldo_restante: number;
+    }[];
+  }[];
+}
+
+interface WizardData {
+  valorSolicitado: number;
+  proposito: string;
+  detalhamento: string;
+  connections: string[];
+  simulation: SimulationData;
+}
+
 export default function Step4Page() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [wizardData, setWizardData] = useState<any>(null);
+  const [wizardData, setWizardData] = useState<WizardData | null>(null);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [acceptPrivacy, setAcceptPrivacy] = useState(false);
   const [submitting, setSubmitting] = useState(false);

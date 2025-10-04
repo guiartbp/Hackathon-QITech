@@ -491,7 +491,15 @@ export default function MeusPagamentos() {
                       <TableHeader>
                         <TableRow>
                           <TableHead>Contrato</TableHead>
-                          <TableHead>Data</TableHead>
+                          <TableHead>
+                            <Button
+                              variant="ghost"
+                              onClick={() => setOrdenacao(ordenacao === 'asc' ? 'desc' : 'asc')}
+                            >
+                              Data
+                              {ordenacao === 'asc' ? ' ▲' : ' ▼'}
+                            </Button>
+                          </TableHead>
                           <TableHead>Valor</TableHead>
                           <TableHead>MRR Período</TableHead>
                           <TableHead>Taxa</TableHead>

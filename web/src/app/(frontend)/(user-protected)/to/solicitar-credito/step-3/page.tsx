@@ -33,11 +33,18 @@ interface SimulationData {
   }[];
 }
 
+interface WizardData {
+  valorSolicitado: number;
+  connections: string[];
+  scoreAtual: number;
+  simulation?: SimulationData;
+}
+
 export default function Step3Page() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [simulation, setSimulation] = useState<SimulationData | null>(null);
-  const [wizardData, setWizardData] = useState<any>(null);
+  const [wizardData, setWizardData] = useState<WizardData | null>(null);
 
   useEffect(() => {
     // Check if user came from previous steps

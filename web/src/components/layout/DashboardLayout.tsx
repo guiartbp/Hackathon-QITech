@@ -2,6 +2,7 @@
 
 import { ReactNode, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Home, TrendingUp, Wallet, Settings, ChevronDown, ChevronRight, CreditCard, BarChart3, Building, User } from 'lucide-react';
 
@@ -17,13 +18,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   // Detectar se é tomador (páginas /to/) ou investidor
   const isTomador = pathname.startsWith('/to/');
-
-  // Navegação para Investidor
-  const navItemsInvestidor = [
-    { href: '/in/marketplace', label: 'Marketplace', icon: Home },
-    { href: '/in/saldo', label: 'Meu Saldo', icon: Wallet },
-    { href: '/in/config', label: 'Configurações', icon: Settings },
-  ];
 
   const portfolioSubItems = [
     { href: '/in/portfolio/evolucao', label: 'Evolução' },
@@ -46,9 +40,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <aside className="w-64 bg-sidebar border-r border-sidebar-border flex-shrink-0 flex flex-col">
         <div className="p-6">
           <Link href="/in/marketplace" className="flex items-center gap-3 mb-6">
-            <img 
-              src="/logo-will.png" 
-              alt="Will Lending Logo" 
+            <Image
+              src="/logo-will.png"
+              alt="Will Lending Logo"
+              width={48}
+              height={40}
               className="w-12 h-10"
             />
             <span className="text-2xl font-bold text-white text-sidebar-foreground tracking-tight">
