@@ -136,7 +136,7 @@ export default function ContratoDetalhes() {
         <Button 
           variant="ghost" 
           size="sm"
-          onClick={() => navigate.push('/portfolio/evolucao')}
+          onClick={() => navigate.push('/in/portfolio/evolucao')}
           className="mb-6 text-primary"
         >
           ← Voltar
