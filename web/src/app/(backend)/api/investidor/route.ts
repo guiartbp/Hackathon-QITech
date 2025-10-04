@@ -1,4 +1,5 @@
-import { parseCreate, parseUpdate, parseQuery } from '../../schemas/investidor';
+import { ZodError } from 'zod';
+import { parseCreate, parseQuery, parseUpdate } from '../../schemas/investidor';
 import {
   createInvestidor,
   deleteInvestidor,
@@ -7,7 +8,7 @@ import {
   updateInvestidor,
 } from '../../services/investidor';
 
-function json(data: any, init: ResponseInit = {}) {
+function json(data: unknown, init: ResponseInit = {}) {
   return new Response(JSON.stringify(data), {
     ...init,
     headers: { 'content-type': 'application/json; charset=utf-8', ...(init.headers || {}) },
@@ -26,10 +27,13 @@ export async function GET(req: Request) {
 
     const items = await listInvestidores({ search, skip, take });
     return json(items);
-  } catch (e: any) {
-    const msg = e?.issues ? e.issues.map((i: any) => `${i.path.join('.')}: ${i.message}`).join(', ') : (e?.message ?? 'Erro ao buscar');
-    const status = e?.issues ? 400 : 500;
-    return json({ error: msg }, { status });
+  } catch (e: unknown) {
+    if (e instanceof ZodError) {
+      const msg = e.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join(', ');
+      return json({ error: msg }, { status: 400 });
+    }
+    const msg = e instanceof Error ? e.message : 'Erro ao buscar';
+    return json({ error: msg }, { status: 500 });
   }
 }
 
@@ -39,8 +43,12 @@ export async function POST(req: Request) {
     const data = parseCreate(body);
     const created = await createInvestidor(data);
     return json(created, { status: 201 });
-  } catch (e: any) {
-    const msg = e?.issues ? e.issues.map((i: any) => `${i.path.join('.')}: ${i.message}`).join(', ') : (e?.message ?? 'Erro ao criar');
+  } catch (e: unknown) {
+    if (e instanceof ZodError) {
+      const msg = e.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join(', ');
+      return json({ error: msg }, { status: 400 });
+    }
+    const msg = e instanceof Error ? e.message : 'Erro ao criar';
     return json({ error: msg }, { status: 400 });
   }
 }
@@ -57,8 +65,12 @@ export async function PATCH(req: Request) {
 
     const updated = await updateInvestidor({ id, uid_usuario, documento_identificacao }, data);
     return json(updated);
-  } catch (e: any) {
-    const msg = e?.issues ? e.issues.map((i: any) => `${i.path.join('.')}: ${i.message}`).join(', ') : (e?.message ?? 'Erro ao atualizar');
+  } catch (e: unknown) {
+    if (e instanceof ZodError) {
+      const msg = e.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join(', ');
+      return json({ error: msg }, { status: 400 });
+    }
+    const msg = e instanceof Error ? e.message : 'Erro ao atualizar';
     return json({ error: msg }, { status: 400 });
   }
 }
@@ -72,8 +84,12 @@ export async function DELETE(req: Request) {
 
     const deleted = await deleteInvestidor({ id, uid_usuario, documento_identificacao });
     return json(deleted);
-  } catch (e: any) {
-    const msg = e?.issues ? e.issues.map((i: any) => `${i.path.join('.')}: ${i.message}`).join(', ') : (e?.message ?? 'Erro ao excluir');
+  } catch (e: unknown) {
+    if (e instanceof ZodError) {
+      const msg = e.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join(', ');
+      return json({ error: msg }, { status: 400 });
+    }
+    const msg = e instanceof Error ? e.message : 'Erro ao excluir';
     return json({ error: msg }, { status: 400 });
   }
 }

@@ -449,7 +449,7 @@ export default function MeusPagamentos() {
                         dataKey="valor" 
                         fill="hsl(var(--purple))"
                         radius={[8, 8, 0, 0]}
-                        onClick={(data: any) => setMesSelecionado(data.payload.mes)}
+                        onClick={(data) => setMesSelecionado(data.payload.mes)}
                         cursor="pointer"
                       >
                         {mockHistoricoData.map((entry, index) => (

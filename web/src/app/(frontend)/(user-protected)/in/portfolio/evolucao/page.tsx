@@ -1,16 +1,14 @@
 "use client";
 import { useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Select } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Eye } from 'lucide-react';
 import { formatCurrency } from '@/lib/format';
-import { LineChartComponent } from '@/components/detalhes/LineChartComponent';
 import { AreaChart, Area, PieChart, Pie, Cell, ResponsiveContainer, Tooltip, LineChart, Line, XAxis, YAxis } from 'recharts';
 
 interface MetricCardProps {
@@ -276,9 +274,8 @@ export default function PortfolioEvolucao() {
                       value={item.percentual} 
                       className="h-3"
                       style={{ 
-                        // @ts-ignore
                         '--progress-background': item.color 
-                      }}
+                      } as React.CSSProperties}
                     />
                   </div>
                 ))}

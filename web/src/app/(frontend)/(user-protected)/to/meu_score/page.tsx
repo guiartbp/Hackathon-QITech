@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from 'recharts';
+import { RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip, TooltipProps } from 'recharts';
 import { formatCurrency } from '@/lib/format';
 
 // Interfaces TypeScript
@@ -188,7 +188,7 @@ const getRecomendacaoIcon = (recomendacao: Recomendacao): string => {
 };
 
 // Custom Tooltip Component
-const CustomRadarTooltip = ({ active, payload }: any) => {
+const CustomRadarTooltip = ({ active, payload }: TooltipProps<number, string>) => {
   if (!active || !payload || !payload.length) return null;
   
   const data = payload[0].payload;

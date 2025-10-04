@@ -1,7 +1,7 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface LineChartComponentProps {
-  data: Array<{ [key: string]: any }>;
+  data: Array<{ [key: string]: string | number }>;
   xKey: string;
   yKey: string;
   color?: string;

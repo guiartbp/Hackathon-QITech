@@ -97,8 +97,8 @@ const mockContratos: ContratoDivida[] = [
 ];
 
 export default function MinhasDividas() {
-  const [propostaAberta, setPropostaAberta] = useState<PropostaAberta | null>(mockPropostaAberta);
-  const [contratos, setContratos] = useState<ContratoDivida[]>(mockContratos);
+  const [propostaAberta] = useState<PropostaAberta | null>(mockPropostaAberta);
+  const [contratos] = useState<ContratoDivida[]>(mockContratos);
   const [tabAtiva, setTabAtiva] = useState('todos');
   const navigate = useRouter();
 
@@ -211,7 +211,7 @@ export default function MinhasDividas() {
                 </div>
                 <Button 
                   className="bg-warning hover:bg-warning/90 text-warning-foreground"
-                  onClick={() => navigate.push('/to/solicitar-credito')}
+                  onClick={() => navigate.push('/to/solicitar-credito/step-1')}
                 >
                   Solicitar crédito
                 </Button>
