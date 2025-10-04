@@ -29,7 +29,7 @@ function CadastroForm() {
     setLoading(true);
 
     try {
-      const result = await await authClient.signUp.email({
+      const result = await authClient.signUp.email({
         name,
         email,
         password,
