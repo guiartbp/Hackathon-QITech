@@ -49,6 +49,7 @@ function CadastroForm({ isDarkBackground = true, onUserTypeChange }: CadastroFor
         email,
         password,
         userType, // Pass userType directly as an additional field
+        callbackURL: "/in/contratodetalhes",
       });
 
       if (result.error) {
