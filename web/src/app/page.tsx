@@ -23,7 +23,7 @@ export default function HomePage() {
               height={40}
               className="mr-3"
             />
-            <span className="text-white font-bold text-xl">Will</span>
+            <span className="text-2xl font-bold text-white text-sidebar-foreground tracking-tight">will.lending</span>
           </div>
           
           {/* Navigation */}
