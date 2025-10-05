@@ -1,79 +1,29 @@
-import { NextRequest, NextResponse } from "next/server";
-import { PagamentoService } from "../../services/pagamento";
-import {
-  createPagamentoSchema,
-  pagamentoQuerySchema,
-} from "../../schemas/pagamento";
+import { PagamentoService } from "@/app/(backend)/services/pagamentos";
+import { PagamentoSchema } from "@/app/(backend)/schemas/pagamentos";
 import { ZodError } from "zod";
 
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    
-    const queryParams = {
-      contratoId: searchParams.get("contratoId") || undefined,
-      status: searchParams.get("status") || undefined,
-      tipoPagamento: searchParams.get("tipoPagamento") || undefined,
-      dataVencimentoInicio: searchParams.get("dataVencimentoInicio") || undefined,
-      dataVencimentoFim: searchParams.get("dataVencimentoFim") || undefined,
-      page: searchParams.get("page") || undefined,
-      limit: searchParams.get("limit") || undefined,
-    };
-
-    const validatedQuery = pagamentoQuerySchema.parse(queryParams);
-    const result = await PagamentoService.findMany(validatedQuery);
-
-    return NextResponse.json(result, { status: 200 });
-  } catch (error) {
-    console.error("Erro ao buscar pagamentos:", error);
-
-    if (error instanceof ZodError) {
-      return NextResponse.json(
-        {
-          error: "Dados inválidos",
-          details: error.issues,
-        },
-        { status: 400 }
-      );
-    }
-
-    return NextResponse.json(
-      {
-        error: "Erro interno do servidor",
-        message: error instanceof Error ? error.message : "Erro desconhecido",
-      },
-      { status: 500 }
-    );
+function getErrorMessage(err: unknown): string {
+  if (err instanceof ZodError) {
+    return err.issues.map(issue => issue.message).join("; ");
   }
+  if (err instanceof Error) return err.message;
+  if (typeof err === "string") return err;
+  return "Erro desconhecido";
 }
 
-export async function POST(request: NextRequest) {
+export async function GET() {
+  const pagamentos = await PagamentoService.listar();
+  return Response.json(pagamentos);
+}
+
+export async function POST(req: Request) {
   try {
-    const body = await request.json();
-    const validatedData = createPagamentoSchema.parse(body);
-
-    const pagamento = await PagamentoService.create(validatedData);
-
-    return NextResponse.json(pagamento, { status: 201 });
-  } catch (error) {
-    console.error("Erro ao criar pagamento:", error);
-
-    if (error instanceof ZodError) {
-      return NextResponse.json(
-        {
-          error: "Dados inválidos",
-          details: error.issues,
-        },
-        { status: 400 }
-      );
-    }
-
-    return NextResponse.json(
-      {
-        error: "Erro interno do servidor",
-        message: error instanceof Error ? error.message : "Erro desconhecido",
-      },
-      { status: 500 }
-    );
+    const body = await req.json();
+    const dados = PagamentoSchema.parse(body);
+    const novo = await PagamentoService.criar(dados);
+    return Response.json(novo, { status: 201 });
+  } catch (err: unknown) {
+    const status = err instanceof ZodError ? 422 : 400;
+    return Response.json({ erro: getErrorMessage(err) }, { status });
   }
 }

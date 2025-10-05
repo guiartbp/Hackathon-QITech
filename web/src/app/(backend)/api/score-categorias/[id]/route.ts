@@ -1,140 +1,50 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { scoreCategoriaService } from '../../../services/score-categoria'
-import { updateScoreCategoriaSchema, scoreCategoriaParamsSchema } from '../../../schemas/score-categoria'
-import { z } from 'zod'
+import { ScoreCategoriaService } from "@/app/(backend)/services/score-categorias";
+import { ScoreCategoriaSchema } from "@/app/(backend)/schemas/score-categorias";
+import { ZodError } from "zod";
 
-interface RouteContext {
-  params: {
-    id: string
+function getErrorMessage(err: unknown): string {
+  if (err instanceof ZodError) {
+    return err.issues.map(issue => issue.message).join("; ");
   }
+  if (err instanceof Error) return err.message;
+  if (typeof err === "string") return err;
+  return "Erro desconhecido";
 }
 
-// GET /api/score-categorias/[id] - Buscar categoria de score por ID
 export async function GET(
-  request: NextRequest,
-  context: RouteContext
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  const scoreCategoria = await ScoreCategoriaService.buscarPorId(params.id);
+  if (!scoreCategoria) {
+    return Response.json({ erro: "Score categoria não encontrada" }, { status: 404 });
+  }
+  return Response.json(scoreCategoria);
+}
+
+export async function PATCH(
+  req: Request,
+  { params }: { params: { id: string } }
 ) {
   try {
-    // Validar parâmetros da rota
-    const { id } = scoreCategoriaParamsSchema.parse(context.params)
-
-    const scoreCategoria = await scoreCategoriaService.findById(id)
-
-    if (!scoreCategoria) {
-      return NextResponse.json(
-        { error: 'Categoria de score não encontrada' },
-        { status: 404 }
-      )
-    }
-
-    return NextResponse.json(scoreCategoria)
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        {
-          error: 'Parâmetros inválidos',
-          details: error.issues,
-        },
-        { status: 400 }
-      )
-    }
-
-    console.error('Erro ao buscar categoria de score:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    const body = await req.json();
+    const dados = ScoreCategoriaSchema.parse(body);
+    const atualizado = await ScoreCategoriaService.atualizar(params.id, dados);
+    return Response.json(atualizado);
+  } catch (err: unknown) {
+    const status = err instanceof ZodError ? 422 : 400;
+    return Response.json({ erro: getErrorMessage(err) }, { status });
   }
 }
 
-// PUT /api/score-categorias/[id] - Atualizar categoria de score
-export async function PUT(
-  request: NextRequest,
-  context: RouteContext
-) {
-  try {
-    // Validar parâmetros da rota
-    const { id } = scoreCategoriaParamsSchema.parse(context.params)
-
-    const body = await request.json()
-
-    // Validar dados de entrada
-    const validatedData = updateScoreCategoriaSchema.parse(body)
-
-    const scoreCategoria = await scoreCategoriaService.update(id, validatedData)
-
-    return NextResponse.json(scoreCategoria)
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        {
-          error: 'Dados inválidos',
-          details: error.issues,
-        },
-        { status: 400 }
-      )
-    }
-
-    if (error instanceof Error) {
-      if (error.message === 'Categoria de score não encontrada') {
-        return NextResponse.json(
-          { error: error.message },
-          { status: 404 }
-        )
-      }
-      
-      if (error.message === 'Já existe uma categoria com este nome para este score') {
-        return NextResponse.json(
-          { error: error.message },
-          { status: 409 } // Conflict
-        )
-      }
-    }
-
-    console.error('Erro ao atualizar categoria de score:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
-  }
-}
-
-// DELETE /api/score-categorias/[id] - Deletar categoria de score
 export async function DELETE(
-  request: NextRequest,
-  context: RouteContext
+  req: Request,
+  { params }: { params: { id: string } }
 ) {
   try {
-    // Validar parâmetros da rota
-    const { id } = scoreCategoriaParamsSchema.parse(context.params)
-
-    const scoreCategoria = await scoreCategoriaService.delete(id)
-
-    return NextResponse.json(scoreCategoria)
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        {
-          error: 'Parâmetros inválidos',
-          details: error.issues,
-        },
-        { status: 400 }
-      )
-    }
-
-    if (error instanceof Error) {
-      if (error.message === 'Categoria de score não encontrada') {
-        return NextResponse.json(
-          { error: error.message },
-          { status: 404 }
-        )
-      }
-    }
-
-    console.error('Erro ao deletar categoria de score:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    await ScoreCategoriaService.remover(params.id);
+    return Response.json({ sucesso: true });
+  } catch (err: unknown) {
+    return Response.json({ erro: getErrorMessage(err) }, { status: 400 });
   }
 }

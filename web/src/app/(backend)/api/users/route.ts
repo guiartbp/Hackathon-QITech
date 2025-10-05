@@ -1,53 +1,35 @@
-import { NextRequest, NextResponse } from "next/server";
-
-import { registerSchema } from "@/backend/schemas";
-import { blockForbiddenRequests, returnInvalidDataErrors, validBody, zodErrorHandler } from "@/utils/api";
-import { findUserByEmail, getAllUsers } from "../../services/users";
-import { AllowedRoutes } from "@/types";
+import { getAllUsers, findUserByEmail } from "../../services/users";
+import { registerSchema } from "../../schemas";
+import { ZodError } from "zod";
 import { auth } from "@/auth";
 
-const allowedRoles: AllowedRoutes = {
-  GET: ["SUPER_ADMIN", "ADMIN"]
-}
-
-// rota de get all users
-export async function GET(request: NextRequest) {
-  try {
-    const forbidden = await blockForbiddenRequests(request, allowedRoles.POST);
-    if (forbidden) {
-      return forbidden;
-    }
-
-    const users = await getAllUsers();
-    return NextResponse.json(users);
-  } catch (error) {
-    if (error instanceof NextResponse) {
-      return error;
-    }
-
-    return zodErrorHandler(error);    
+function getErrorMessage(err: unknown): string {
+  if (err instanceof ZodError) {
+    return err.issues.map(e => e.message).join("; ");
   }
+  if (err instanceof Error) return err.message;
+  if (typeof err === "string") return err;
+  return "Erro desconhecido";
 }
 
-export async function POST(request: NextRequest) {
+export async function GET() {
+  const users = await getAllUsers();
+  return Response.json(users);
+}
+
+export async function POST(req: Request) {
   try {
-    const body = await validBody(request);
-    const validationResult = registerSchema.safeParse(body);
-
-    if (!validationResult.success) {
-      return returnInvalidDataErrors(validationResult.error);
-    }
+    const body = await req.json();
+    const dados = registerSchema.parse(body);
     
-    const validatedData = validationResult.data
-
-    const { name, email, password } = validatedData;
+    const { name, email, password } = dados;
 
     const existingUser = await findUserByEmail(email);
 
     if (existingUser) {
-      return NextResponse.json(
+      return Response.json(
         { 
-          error: "Usuário já existe",
+          erro: "Usuário já existe",
           field: "email" 
         },
         { status: 409 }
@@ -63,18 +45,9 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    return NextResponse.json(
-      { 
-        message: "Usuário criado com sucesso",
-        user 
-      },
-      { status: 201 }
-    );
-  } catch (error) {
-    if (error instanceof NextResponse) {
-      return error;
-    }
-
-    return zodErrorHandler(error);    
+    return Response.json(user, { status: 201 });
+  } catch (err: unknown) {
+    const status = err instanceof ZodError ? 422 : 400;
+    return Response.json({ erro: getErrorMessage(err) }, { status });
   }
 }

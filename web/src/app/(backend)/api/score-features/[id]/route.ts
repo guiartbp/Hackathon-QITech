@@ -1,133 +1,50 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { scoreFeatureService } from '../../../services/score-feature'
-import { updateScoreFeatureSchema, scoreFeatureParamsSchema } from '../../../schemas/score-feature'
-import { z } from 'zod'
+import { ScoreFeatureService } from "@/app/(backend)/services/score-features";
+import { ScoreFeatureSchema } from "@/app/(backend)/schemas/score-features";
+import { ZodError } from "zod";
 
-interface RouteContext {
-  params: {
-    id: string
+function getErrorMessage(err: unknown): string {
+  if (err instanceof ZodError) {
+    return err.issues.map(issue => issue.message).join("; ");
   }
+  if (err instanceof Error) return err.message;
+  if (typeof err === "string") return err;
+  return "Erro desconhecido";
 }
 
-// GET /api/score-features/[id] - Buscar feature de score por ID
 export async function GET(
-  request: NextRequest,
-  context: RouteContext
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  const scoreFeature = await ScoreFeatureService.buscarPorId(params.id);
+  if (!scoreFeature) {
+    return Response.json({ erro: "Score feature não encontrada" }, { status: 404 });
+  }
+  return Response.json(scoreFeature);
+}
+
+export async function PATCH(
+  req: Request,
+  { params }: { params: { id: string } }
 ) {
   try {
-    // Validar parâmetros da rota
-    const { id } = scoreFeatureParamsSchema.parse(context.params)
-
-    const scoreFeature = await scoreFeatureService.findById(id)
-
-    if (!scoreFeature) {
-      return NextResponse.json(
-        { error: 'Feature de score não encontrada' },
-        { status: 404 }
-      )
-    }
-
-    return NextResponse.json(scoreFeature)
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        {
-          error: 'Parâmetros inválidos',
-          details: error.issues,
-        },
-        { status: 400 }
-      )
-    }
-
-    console.error('Erro ao buscar feature de score:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    const body = await req.json();
+    const dados = ScoreFeatureSchema.parse(body);
+    const atualizado = await ScoreFeatureService.atualizar(params.id, dados);
+    return Response.json(atualizado);
+  } catch (err: unknown) {
+    const status = err instanceof ZodError ? 422 : 400;
+    return Response.json({ erro: getErrorMessage(err) }, { status });
   }
 }
 
-// PUT /api/score-features/[id] - Atualizar feature de score
-export async function PUT(
-  request: NextRequest,
-  context: RouteContext
-) {
-  try {
-    // Validar parâmetros da rota
-    const { id } = scoreFeatureParamsSchema.parse(context.params)
-
-    const body = await request.json()
-
-    // Validar dados de entrada
-    const validatedData = updateScoreFeatureSchema.parse(body)
-
-    const scoreFeature = await scoreFeatureService.update(id, validatedData)
-
-    return NextResponse.json(scoreFeature)
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        {
-          error: 'Dados inválidos',
-          details: error.issues,
-        },
-        { status: 400 }
-      )
-    }
-
-    if (error instanceof Error) {
-      if (error.message === 'Feature de score não encontrada') {
-        return NextResponse.json(
-          { error: error.message },
-          { status: 404 }
-        )
-      }
-    }
-
-    console.error('Erro ao atualizar feature de score:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
-  }
-}
-
-// DELETE /api/score-features/[id] - Deletar feature de score
 export async function DELETE(
-  request: NextRequest,
-  context: RouteContext
+  req: Request,
+  { params }: { params: { id: string } }
 ) {
   try {
-    // Validar parâmetros da rota
-    const { id } = scoreFeatureParamsSchema.parse(context.params)
-
-    const scoreFeature = await scoreFeatureService.delete(id)
-
-    return NextResponse.json(scoreFeature)
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        {
-          error: 'Parâmetros inválidos',
-          details: error.issues,
-        },
-        { status: 400 }
-      )
-    }
-
-    if (error instanceof Error) {
-      if (error.message === 'Feature de score não encontrada') {
-        return NextResponse.json(
-          { error: error.message },
-          { status: 404 }
-        )
-      }
-    }
-
-    console.error('Erro ao deletar feature de score:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    await ScoreFeatureService.remover(params.id);
+    return Response.json({ sucesso: true });
+  } catch (err: unknown) {
+    return Response.json({ erro: getErrorMessage(err) }, { status: 400 });
   }
 }

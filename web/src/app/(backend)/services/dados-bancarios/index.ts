@@ -1,101 +1,39 @@
-import { PrismaClient, Prisma } from '../../../../generated/prisma';
+import { prisma } from "@/lib/prisma";
+import { DadosBancariosInput } from "../../schemas/dados-bancarios";
 
-const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
-export const prisma =
-  globalForPrisma.prisma ??
-  new PrismaClient({
-    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
-  });
+export const DadosBancariosService = {
+  listar: async () => {
+    return prisma.dadosBancarios.findMany();
+  },
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+  buscarPorId: async (id: string) => {
+    return prisma.dadosBancarios.findUnique({
+      where: { id },
+    });
+  },
 
-type WhereUnique = Prisma.DadosBancariosWhereUniqueInput;
+  criar: async (dados: DadosBancariosInput) => {
+    const { ultimaValidacao, ...resto } = dados;
+    return prisma.dadosBancarios.create({
+      data: {
+        ...resto,
+        ultimaValidacao: ultimaValidacao ? new Date(ultimaValidacao) : null,
+      },
+    });
+  },
 
-function pickWhereUnique(params: {
-  id?: string;
-}): WhereUnique {
-  if (params.id) return { id: params.id };
-  throw new Error('Informe id');
-}
+  atualizar: async (id: string, dados: Partial<DadosBancariosInput>) => {
+    const { ultimaValidacao, ...resto } = dados;
+    return prisma.dadosBancarios.update({
+      where: { id },
+      data: {
+        ...resto,
+        ultimaValidacao: ultimaValidacao ? new Date(ultimaValidacao) : undefined,
+      },
+    });
+  },
 
-export async function createDadosBancarios(data: Prisma.DadosBancariosCreateInput) {
-  return prisma.dadosBancarios.create({ data });
-}
-
-export async function getDadosBancarios(params: {
-  id?: string;
-}) {
-  const where = pickWhereUnique(params);
-  return prisma.dadosBancarios.findUnique({ where });
-}
-
-export async function listDadosBancarios(params?: {
-  skip?: number;
-  take?: number;
-  search?: string;
-  usuario_id?: string;
-  tipo_usuario?: string;
-  is_principal?: string;
-}) {
-  const { skip = 0, take = 50, search, usuario_id, tipo_usuario, is_principal } = params ?? {};
-  
-  const where: any = {};
-
-  // Filtros específicos
-  if (usuario_id) {
-    where.usuarioId = usuario_id;
-  }
-  
-  if (tipo_usuario) {
-    where.tipoUsuario = tipo_usuario;
-  }
-  
-  if (is_principal) {
-    where.isPrincipal = is_principal === 'true';
-  }
-
-  // Busca textual
-  if (search) {
-    where.OR = [
-      { banco: { contains: search, mode: 'insensitive' } },
-      { agencia: { contains: search, mode: 'insensitive' } },
-      { conta: { contains: search, mode: 'insensitive' } },
-      { ispb: { contains: search, mode: 'insensitive' } },
-    ];
-  }
-
-  return prisma.dadosBancarios.findMany({
-    skip,
-    take,
-    where,
-    orderBy: { atualizadoEm: 'desc' },
-  });
-}
-
-export async function listDadosBancariosByUser(params: {
-  usuario_id: string;
-  tipo_usuario: string;
-}) {
-  return prisma.dadosBancarios.findMany({
-    where: {
-      usuarioId: params.usuario_id,
-      tipoUsuario: params.tipo_usuario,
-    },
-    orderBy: { atualizadoEm: 'desc' },
-  });
-}
-
-export async function updateDadosBancarios(
-  params: { id?: string },
-  data: Prisma.DadosBancariosUpdateInput
-) {
-  const where = pickWhereUnique(params);
-  return prisma.dadosBancarios.update({ where, data });
-}
-
-export async function deleteDadosBancarios(params: {
-  id?: string;
-}) {
-  const where = pickWhereUnique(params);
-  return prisma.dadosBancarios.delete({ where });
-}
+  remover: async (id: string) => {
+    return prisma.dadosBancarios.delete({ where: { id } });
+  },
+};

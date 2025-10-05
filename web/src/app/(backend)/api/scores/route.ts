@@ -1,84 +1,29 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { scoreService } from '../../services/score'
-import { createScoreSchema, scoreQuerySchema } from '../../schemas/score'
-import { z } from 'zod'
+import { ScoreService } from "@/app/(backend)/services/scores";
+import { ScoreSchema } from "@/app/(backend)/schemas/scores";
+import { ZodError } from "zod";
 
-// GET /api/scores - Listar scores com filtros e paginação
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url)
-    const queryParams = Object.fromEntries(searchParams.entries())
-
-    // Validar query parameters
-    const validatedQuery = scoreQuerySchema.parse(queryParams)
-
-    const scores = await scoreService.findMany(validatedQuery)
-    const total = await scoreService.count(validatedQuery)
-
-    return NextResponse.json({
-      data: scores,
-      pagination: {
-        total,
-        limit: validatedQuery.limit || 50,
-        offset: validatedQuery.offset || 0,
-        hasNext: ((validatedQuery.offset || 0) + (validatedQuery.limit || 50)) < total,
-        hasPrev: (validatedQuery.offset || 0) > 0,
-      },
-    })
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        {
-          error: 'Parâmetros inválidos',
-          details: error.issues,
-        },
-        { status: 400 }
-      )
-    }
-
-    console.error('Erro ao buscar scores:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+function getErrorMessage(err: unknown): string {
+  if (err instanceof ZodError) {
+    return err.issues.map(issue => issue.message).join("; ");
   }
+  if (err instanceof Error) return err.message;
+  if (typeof err === "string") return err;
+  return "Erro desconhecido";
 }
 
-// POST /api/scores - Criar novo score
-export async function POST(request: NextRequest) {
+export async function GET() {
+  const scores = await ScoreService.listar();
+  return Response.json(scores);
+}
+
+export async function POST(req: Request) {
   try {
-    const body = await request.json()
-
-    // Validar dados de entrada
-    const validatedData = createScoreSchema.parse(body)
-
-    const score = await scoreService.create(validatedData)
-
-    return NextResponse.json(score, { status: 201 })
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        {
-          error: 'Dados inválidos',
-          details: error.issues,
-        },
-        { status: 400 }
-      )
-    }
-
-    if (error instanceof Error) {
-      if (error.message === 'Empresa não encontrada') {
-        return NextResponse.json(
-          { error: error.message },
-          { status: 404 }
-        )
-      }
-    }
-
-    console.error('Erro ao criar score:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    const body = await req.json();
+    const dados = ScoreSchema.parse(body);
+    const novo = await ScoreService.criar(dados);
+    return Response.json(novo, { status: 201 });
+  } catch (err: unknown) {
+    const status = err instanceof ZodError ? 422 : 400;
+    return Response.json({ erro: getErrorMessage(err) }, { status });
   }
 }

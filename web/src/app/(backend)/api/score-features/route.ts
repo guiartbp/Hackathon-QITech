@@ -1,84 +1,29 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { scoreFeatureService } from '../../services/score-feature'
-import { createScoreFeatureSchema, scoreFeatureQuerySchema } from '../../schemas/score-feature'
-import { z } from 'zod'
+import { ScoreFeatureService } from "@/app/(backend)/services/score-features";
+import { ScoreFeatureSchema } from "@/app/(backend)/schemas/score-features";
+import { ZodError } from "zod";
 
-// GET /api/score-features - Listar features de score com filtros e paginação
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url)
-    const queryParams = Object.fromEntries(searchParams.entries())
-
-    // Validar query parameters
-    const validatedQuery = scoreFeatureQuerySchema.parse(queryParams)
-
-    const scoreFeatures = await scoreFeatureService.findMany(validatedQuery)
-    const total = await scoreFeatureService.count(validatedQuery)
-
-    return NextResponse.json({
-      data: scoreFeatures,
-      pagination: {
-        total,
-        limit: validatedQuery.limit || 50,
-        offset: validatedQuery.offset || 0,
-        hasNext: ((validatedQuery.offset || 0) + (validatedQuery.limit || 50)) < total,
-        hasPrev: (validatedQuery.offset || 0) > 0,
-      },
-    })
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        {
-          error: 'Parâmetros inválidos',
-          details: error.issues,
-        },
-        { status: 400 }
-      )
-    }
-
-    console.error('Erro ao buscar features de score:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+function getErrorMessage(err: unknown): string {
+  if (err instanceof ZodError) {
+    return err.issues.map(issue => issue.message).join("; ");
   }
+  if (err instanceof Error) return err.message;
+  if (typeof err === "string") return err;
+  return "Erro desconhecido";
 }
 
-// POST /api/score-features - Criar nova feature de score
-export async function POST(request: NextRequest) {
+export async function GET() {
+  const scoreFeatures = await ScoreFeatureService.listar();
+  return Response.json(scoreFeatures);
+}
+
+export async function POST(req: Request) {
   try {
-    const body = await request.json()
-
-    // Validar dados de entrada
-    const validatedData = createScoreFeatureSchema.parse(body)
-
-    const scoreFeature = await scoreFeatureService.create(validatedData)
-
-    return NextResponse.json(scoreFeature, { status: 201 })
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        {
-          error: 'Dados inválidos',
-          details: error.issues,
-        },
-        { status: 400 }
-      )
-    }
-
-    if (error instanceof Error) {
-      if (error.message === 'Categoria de score não encontrada') {
-        return NextResponse.json(
-          { error: error.message },
-          { status: 404 }
-        )
-      }
-    }
-
-    console.error('Erro ao criar feature de score:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    const body = await req.json();
+    const dados = ScoreFeatureSchema.parse(body);
+    const novo = await ScoreFeatureService.criar(dados);
+    return Response.json(novo, { status: 201 });
+  } catch (err: unknown) {
+    const status = err instanceof ZodError ? 422 : 400;
+    return Response.json({ erro: getErrorMessage(err) }, { status });
   }
 }

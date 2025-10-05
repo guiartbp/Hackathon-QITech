@@ -1,1 +1,36 @@
-export * from './metricas-mensais.schema';
+import { z } from "zod";
+
+export const MetricasMensaisSchema = z.object({
+  empresaId: z.string().min(1, "ID da empresa é obrigatório"),
+  mesReferencia: z.string().datetime("Data inválida"),
+  mrrFinal: z.number().optional(),
+  mrrMedio: z.number().optional(),
+  arrFinal: z.number().optional(),
+  nrrMensal: z.number().optional(),
+  numClientesInicio: z.number().int().optional(),
+  numClientesFinal: z.number().int().optional(),
+  novosClientes: z.number().int().optional(),
+  clientesCancelados: z.number().int().optional(),
+  investimentoMarketingVendas: z.number().optional(),
+  cacPago: z.number().optional(),
+  ltvMedio: z.number().optional(),
+  ltvCacRatio: z.number().optional(),
+  ticketMedio: z.number().optional(),
+  receitaTotal: z.number().optional(),
+  opexMensal: z.number().optional(),
+  netBurnMensal: z.number().optional(),
+  cashBalanceFinal: z.number().optional(),
+  cashRunwayMeses: z.number().int().optional(),
+  expansionMrr: z.number().optional(),
+  contractionMrr: z.number().optional(),
+  expansionPct: z.number().optional(),
+  contractionPct: z.number().optional(),
+  churnRateMedio: z.number().optional(),
+  dscrAjustadoMensal: z.number().optional(),
+  margemBruta: z.number().optional(),
+  burnMultiple: z.number().optional(),
+  cacPaybackMeses: z.number().int().optional(),
+  magicNumber: z.number().optional(),
+});
+
+export type MetricasMensaisInput = z.infer<typeof MetricasMensaisSchema>;

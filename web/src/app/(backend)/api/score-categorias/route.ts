@@ -1,91 +1,29 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { scoreCategoriaService } from '../../services/score-categoria'
-import { createScoreCategoriaSchema, scoreCategoriaQuerySchema } from '../../schemas/score-categoria'
-import { z } from 'zod'
+import { ScoreCategoriaService } from "@/app/(backend)/services/score-categorias";
+import { ScoreCategoriaSchema } from "@/app/(backend)/schemas/score-categorias";
+import { ZodError } from "zod";
 
-// GET /api/score-categorias - Listar categorias de score com filtros e paginação
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url)
-    const queryParams = Object.fromEntries(searchParams.entries())
-
-    // Validar query parameters
-    const validatedQuery = scoreCategoriaQuerySchema.parse(queryParams)
-
-    const scoreCategories = await scoreCategoriaService.findMany(validatedQuery)
-    const total = await scoreCategoriaService.count(validatedQuery)
-
-    return NextResponse.json({
-      data: scoreCategories,
-      pagination: {
-        total,
-        limit: validatedQuery.limit || 50,
-        offset: validatedQuery.offset || 0,
-        hasNext: ((validatedQuery.offset || 0) + (validatedQuery.limit || 50)) < total,
-        hasPrev: (validatedQuery.offset || 0) > 0,
-      },
-    })
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        {
-          error: 'Parâmetros inválidos',
-          details: error.issues,
-        },
-        { status: 400 }
-      )
-    }
-
-    console.error('Erro ao buscar categorias de score:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+function getErrorMessage(err: unknown): string {
+  if (err instanceof ZodError) {
+    return err.issues.map(issue => issue.message).join("; ");
   }
+  if (err instanceof Error) return err.message;
+  if (typeof err === "string") return err;
+  return "Erro desconhecido";
 }
 
-// POST /api/score-categorias - Criar nova categoria de score
-export async function POST(request: NextRequest) {
+export async function GET() {
+  const scoreCategorias = await ScoreCategoriaService.listar();
+  return Response.json(scoreCategorias);
+}
+
+export async function POST(req: Request) {
   try {
-    const body = await request.json()
-
-    // Validar dados de entrada
-    const validatedData = createScoreCategoriaSchema.parse(body)
-
-    const scoreCategoria = await scoreCategoriaService.create(validatedData)
-
-    return NextResponse.json(scoreCategoria, { status: 201 })
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        {
-          error: 'Dados inválidos',
-          details: error.issues,
-        },
-        { status: 400 }
-      )
-    }
-
-    if (error instanceof Error) {
-      if (error.message === 'Score não encontrado') {
-        return NextResponse.json(
-          { error: error.message },
-          { status: 404 }
-        )
-      }
-      
-      if (error.message === 'Já existe uma categoria com este nome para este score') {
-        return NextResponse.json(
-          { error: error.message },
-          { status: 409 } // Conflict
-        )
-      }
-    }
-
-    console.error('Erro ao criar categoria de score:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    const body = await req.json();
+    const dados = ScoreCategoriaSchema.parse(body);
+    const novo = await ScoreCategoriaService.criar(dados);
+    return Response.json(novo, { status: 201 });
+  } catch (err: unknown) {
+    const status = err instanceof ZodError ? 422 : 400;
+    return Response.json({ erro: getErrorMessage(err) }, { status });
   }
 }

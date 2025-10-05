@@ -1,75 +1,29 @@
-import { NextRequest, NextResponse } from "next/server";
-import { ContratoService } from "../../services/contratoService";
-import { createContratoSchema, contratoQuerySchema } from "../../schemas/contrato";
+import { ContratoService } from "@/app/(backend)/services/contratos";
+import { ContratoSchema } from "@/app/(backend)/schemas/contratos";
+import { ZodError } from "zod";
 
-const contratoService = new ContratoService();
-
-// GET /api/contratos - Buscar todos os contratos
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    
-    const queryParams = Object.fromEntries(searchParams);
-    const validatedParams = contratoQuerySchema.parse(queryParams);
-
-    const result = await contratoService.getAllContratos(validatedParams);
-
-    return NextResponse.json({
-      success: true,
-      data: result.data,
-      pagination: result.pagination,
-    });
-  } catch (error) {
-    console.error("Erro ao buscar contratos:", error);
-    
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Erro interno do servidor",
-        message: error instanceof Error ? error.message : "Erro desconhecido",
-      },
-      { status: 500 }
-    );
+function getErrorMessage(err: unknown): string {
+  if (err instanceof ZodError) {
+    return err.issues.map(issue => issue.message).join("; ");
   }
+  if (err instanceof Error) return err.message;
+  if (typeof err === "string") return err;
+  return "Erro desconhecido";
 }
 
-// POST /api/contratos - Criar novo contrato
-export async function POST(request: NextRequest) {
+export async function GET() {
+  const contratos = await ContratoService.listar();
+  return Response.json(contratos);
+}
+
+export async function POST(req: Request) {
   try {
-    const body = await request.json();
-    const validatedData = createContratoSchema.parse(body);
-
-    const contrato = await contratoService.createContrato(validatedData);
-
-    return NextResponse.json(
-      {
-        success: true,
-        data: contrato,
-        message: "Contrato criado com sucesso",
-      },
-      { status: 201 }
-    );
-  } catch (error) {
-    console.error("Erro ao criar contrato:", error);
-
-    if (error instanceof Error && error.message.includes("validation")) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Dados inválidos",
-          message: error.message,
-        },
-        { status: 400 }
-      );
-    }
-
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Erro interno do servidor",
-        message: error instanceof Error ? error.message : "Erro desconhecido",
-      },
-      { status: 500 }
-    );
+    const body = await req.json();
+    const dados = ContratoSchema.parse(body);
+    const novo = await ContratoService.criar(dados);
+    return Response.json(novo, { status: 201 });
+  } catch (err: unknown) {
+    const status = err instanceof ZodError ? 422 : 400;
+    return Response.json({ erro: getErrorMessage(err) }, { status });
   }
 }

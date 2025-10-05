@@ -1,133 +1,50 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { scoreService } from '../../../services/score'
-import { updateScoreSchema, scoreParamsSchema } from '../../../schemas/score'
-import { z } from 'zod'
+import { ScoreService } from "@/app/(backend)/services/scores";
+import { ScoreSchema } from "@/app/(backend)/schemas/scores";
+import { ZodError } from "zod";
 
-interface RouteContext {
-  params: {
-    id: string
+function getErrorMessage(err: unknown): string {
+  if (err instanceof ZodError) {
+    return err.issues.map(issue => issue.message).join("; ");
   }
+  if (err instanceof Error) return err.message;
+  if (typeof err === "string") return err;
+  return "Erro desconhecido";
 }
 
-// GET /api/scores/[id] - Buscar score por ID
 export async function GET(
-  request: NextRequest,
-  context: RouteContext
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  const score = await ScoreService.buscarPorId(params.id);
+  if (!score) {
+    return Response.json({ erro: "Score não encontrado" }, { status: 404 });
+  }
+  return Response.json(score);
+}
+
+export async function PATCH(
+  req: Request,
+  { params }: { params: { id: string } }
 ) {
   try {
-    // Validar parâmetros da rota
-    const { id } = scoreParamsSchema.parse(context.params)
-
-    const score = await scoreService.findById(id)
-
-    if (!score) {
-      return NextResponse.json(
-        { error: 'Score não encontrado' },
-        { status: 404 }
-      )
-    }
-
-    return NextResponse.json(score)
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        {
-          error: 'Parâmetros inválidos',
-          details: error.issues,
-        },
-        { status: 400 }
-      )
-    }
-
-    console.error('Erro ao buscar score:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    const body = await req.json();
+    const dados = ScoreSchema.parse(body);
+    const atualizado = await ScoreService.atualizar(params.id, dados);
+    return Response.json(atualizado);
+  } catch (err: unknown) {
+    const status = err instanceof ZodError ? 422 : 400;
+    return Response.json({ erro: getErrorMessage(err) }, { status });
   }
 }
 
-// PUT /api/scores/[id] - Atualizar score
-export async function PUT(
-  request: NextRequest,
-  context: RouteContext
-) {
-  try {
-    // Validar parâmetros da rota
-    const { id } = scoreParamsSchema.parse(context.params)
-
-    const body = await request.json()
-
-    // Validar dados de entrada
-    const validatedData = updateScoreSchema.parse(body)
-
-    const score = await scoreService.update(id, validatedData)
-
-    return NextResponse.json(score)
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        {
-          error: 'Dados inválidos',
-          details: error.issues,
-        },
-        { status: 400 }
-      )
-    }
-
-    if (error instanceof Error) {
-      if (error.message === 'Score não encontrado') {
-        return NextResponse.json(
-          { error: error.message },
-          { status: 404 }
-        )
-      }
-    }
-
-    console.error('Erro ao atualizar score:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
-  }
-}
-
-// DELETE /api/scores/[id] - Deletar score
 export async function DELETE(
-  request: NextRequest,
-  context: RouteContext
+  req: Request,
+  { params }: { params: { id: string } }
 ) {
   try {
-    // Validar parâmetros da rota
-    const { id } = scoreParamsSchema.parse(context.params)
-
-    const score = await scoreService.delete(id)
-
-    return NextResponse.json(score)
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        {
-          error: 'Parâmetros inválidos',
-          details: error.issues,
-        },
-        { status: 400 }
-      )
-    }
-
-    if (error instanceof Error) {
-      if (error.message === 'Score não encontrado') {
-        return NextResponse.json(
-          { error: error.message },
-          { status: 404 }
-        )
-      }
-    }
-
-    console.error('Erro ao deletar score:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    await ScoreService.remover(params.id);
+    return Response.json({ sucesso: true });
+  } catch (err: unknown) {
+    return Response.json({ erro: getErrorMessage(err) }, { status: 400 });
   }
 }

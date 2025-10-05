@@ -10,7 +10,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { formatCurrency, formatDate } from '@/lib/format';
 import { ExternalLink, Info, ChevronLeft, ChevronRight } from 'lucide-react';
 import { BarChart, Bar, ResponsiveContainer, XAxis, YAxis, Tooltip, Cell, LineChart, Line, CartesianGrid } from 'recharts';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface MetricBoxProps {
   label: string;
@@ -39,6 +39,8 @@ interface MetricDetailRowProps {
   value: string;
   tooltip?: string;
 }
+ 
+const salario = fetch
 
 function MetricDetailRow({ label, value, tooltip }: MetricDetailRowProps) {
   return (
@@ -59,9 +61,61 @@ export default function ContratoDetalhes() {
   const navigate = useRouter();
   const [zoomStart, setZoomStart] = useState(0);
   const [zoomEnd, setZoomEnd] = useState(9);
+  const [contrato, setContrato] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Mock data - seria buscado via API
-  const contrato = {
+  // Fetch dados do contrato
+  
+  // Loading state
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="p-8 max-w-6xl mx-auto">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Carregando detalhes do contrato...</p>
+            </div>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <DashboardLayout>
+        <div className="p-8 max-w-6xl mx-auto">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <p className="text-destructive mb-4">{error}</p>
+              <Button onClick={() => window.location.reload()}>
+                Tentar novamente
+              </Button>
+            </div>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // No data state
+  if (!contrato) {
+    return (
+      <DashboardLayout>
+        <div className="p-8 max-w-6xl mx-auto">
+          <div className="flex items-center justify-center h-64">
+            <p className="text-muted-foreground">Contrato não encontrado</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Mock data como fallback - remover quando a API estiver pronta
+  const contratoData = contrato || {
     id: id || '1',
     nome: 'AtaAI',
     emoji: '🤖',
@@ -113,7 +167,7 @@ export default function ContratoDetalhes() {
     ]
   };
 
-  const visiblePagamentos = contrato.historicosPagamentos.slice(zoomStart, zoomEnd);
+  const visiblePagamentos = contratoData.historicosPagamentos.slice(zoomStart, zoomEnd);
 
   const handleZoomStart = () => {
     if (zoomStart > 0) {
@@ -123,7 +177,7 @@ export default function ContratoDetalhes() {
   };
 
   const handleZoomEnd = () => {
-    if (zoomEnd < contrato.historicosPagamentos.length) {
+    if (zoomEnd < contratoData.historicosPagamentos.length) {
       setZoomStart(zoomStart + 1);
       setZoomEnd(zoomEnd + 1);
     }
@@ -146,16 +200,16 @@ export default function ContratoDetalhes() {
         <Card className="mb-6">
           <CardHeader>
             <div className="flex items-center gap-4">
-              <span className="text-5xl">{contrato.emoji}</span>
+              <span className="text-5xl">{contratoData.emoji}</span>
               <div>
-                <CardTitle className="text-2xl">{contrato.nome}</CardTitle>
+                <CardTitle className="text-2xl">{contratoData.nome}</CardTitle>
                 <a 
-                  href={contrato.website}
+                  href={contratoData.website}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm text-primary hover:underline flex items-center gap-1"
                 >
-                  {contrato.website} <ExternalLink className="w-3 h-3" />
+                  {contratoData.website} <ExternalLink className="w-3 h-3" />
                 </a>
               </div>
             </div>
@@ -166,25 +220,25 @@ export default function ContratoDetalhes() {
             <div className="grid grid-cols-4 gap-4">
               <MetricBox
                 label="Capital Investido"
-                value={formatCurrency(contrato.capitalInvestido)}
+                value={formatCurrency(contratoData.capitalInvestido)}
                 bgColor="bg-primary/10"
                 textColor="text-primary"
               />
               <MetricBox
                 label="TIR"
-                value={`${contrato.tir}%`}
+                value={`${contratoData.tir}%`}
                 bgColor="bg-purple/10"
                 textColor="text-purple"
               />
               <MetricBox
                 label="Recebido"
-                value={formatCurrency(contrato.recebido)}
+                value={formatCurrency(contratoData.recebido)}
                 bgColor="bg-success/10"
                 textColor="text-success"
               />
               <MetricBox
                 label="Próximo pagamento"
-                value={formatCurrency(contrato.proximoPagamento)}
+                value={formatCurrency(contratoData.proximoPagamento)}
                 subtitle="2%"
                 bgColor="bg-info/10"
                 textColor="text-info"
@@ -194,13 +248,13 @@ export default function ContratoDetalhes() {
             {/* Barra de Progresso */}
             <div>
               <Progress 
-                value={contrato.progresso} 
+                value={contratoData.progresso} 
                 className="h-4 mb-2"
               />
               <div className="flex justify-between">
                 <p className="text-sm text-muted-foreground">Progresso</p>
                 <p className="font-semibold text-primary">
-                  {contrato.progresso}%
+                  {contratoData.progresso}%
                 </p>
               </div>
             </div>
@@ -222,7 +276,7 @@ export default function ContratoDetalhes() {
                     variant="outline" 
                     size="sm"
                     onClick={handleZoomEnd}
-                    disabled={zoomEnd >= contrato.historicosPagamentos.length}
+                    disabled={zoomEnd >= contratoData.historicosPagamentos.length}
                   >
                     <ChevronRight className="w-4 h-4" />
                   </Button>

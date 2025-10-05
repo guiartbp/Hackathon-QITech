@@ -1,80 +1,29 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { InvestimentoService } from '../../../(backend)/services/investimento'
-import { 
-  createInvestimentoSchema, 
-  investimentoQuerySchema 
-} from '../../../(backend)/schemas/investimento'
-import { ZodError } from 'zod'
+import { InvestimentoService } from "@/app/(backend)/services/investimentos";
+import { InvestimentoSchema } from "@/app/(backend)/schemas/investimentos";
+import { ZodError } from "zod";
 
-// GET /api/investimentos - Listar investimentos com filtros
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url)
-    const queryParams = Object.fromEntries(searchParams.entries())
-
-    // Validar query parameters
-    const validatedParams = investimentoQuerySchema.parse(queryParams)
-
-    const result = await InvestimentoService.list(validatedParams)
-
-    return NextResponse.json(result, { status: 200 })
-  } catch (error) {
-    console.error('Erro ao listar investimentos:', error)
-
-    if (error instanceof ZodError) {
-      return NextResponse.json(
-        {
-          error: 'Parâmetros inválidos',
-          details: error.issues,
-        },
-        { status: 400 }
-      )
-    }
-
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+function getErrorMessage(err: unknown): string {
+  if (err instanceof ZodError) {
+    return err.issues.map(issue => issue.message).join("; ");
   }
+  if (err instanceof Error) return err.message;
+  if (typeof err === "string") return err;
+  return "Erro desconhecido";
 }
 
-// POST /api/investimentos - Criar novo investimento
-export async function POST(request: NextRequest) {
+export async function GET() {
+  const investimentos = await InvestimentoService.listar();
+  return Response.json(investimentos);
+}
+
+export async function POST(req: Request) {
   try {
-    const body = await request.json()
-
-    // Validar dados de entrada
-    const validatedData = createInvestimentoSchema.parse(body)
-
-    const investimento = await InvestimentoService.create(validatedData)
-
-    return NextResponse.json(investimento, { status: 201 })
-  } catch (error) {
-    console.error('Erro ao criar investimento:', error)
-
-    if (error instanceof ZodError) {
-      return NextResponse.json(
-        {
-          error: 'Dados inválidos',
-          details: error.issues,
-        },
-        { status: 400 }
-      )
-    }
-
-    if (error instanceof Error) {
-      // Erros específicos do service
-      if (error.message.includes('não encontrado')) {
-        return NextResponse.json(
-          { error: error.message },
-          { status: 404 }
-        )
-      }
-    }
-
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    const body = await req.json();
+    const dados = InvestimentoSchema.parse(body);
+    const novo = await InvestimentoService.criar(dados);
+    return Response.json(novo, { status: 201 });
+  } catch (err: unknown) {
+    const status = err instanceof ZodError ? 422 : 400;
+    return Response.json({ erro: getErrorMessage(err) }, { status });
   }
 }

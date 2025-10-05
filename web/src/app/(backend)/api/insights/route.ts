@@ -1,84 +1,29 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { insightService } from '../../services/insight'
-import { createInsightSchema, insightQuerySchema } from '../../schemas/insight'
-import { z } from 'zod'
+import { InsightService } from "@/app/(backend)/services/insights";
+import { InsightSchema } from "@/app/(backend)/schemas/insights";
+import { ZodError } from "zod";
 
-// GET /api/insights - Listar insights com filtros e paginação
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url)
-    const queryParams = Object.fromEntries(searchParams.entries())
-
-    // Validar query parameters
-    const validatedQuery = insightQuerySchema.parse(queryParams)
-
-    const insights = await insightService.findMany(validatedQuery)
-    const total = await insightService.count(validatedQuery)
-
-    return NextResponse.json({
-      data: insights,
-      pagination: {
-        total,
-        limit: validatedQuery.limit || 50,
-        offset: validatedQuery.offset || 0,
-        hasNext: ((validatedQuery.offset || 0) + (validatedQuery.limit || 50)) < total,
-        hasPrev: (validatedQuery.offset || 0) > 0,
-      },
-    })
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        {
-          error: 'Parâmetros inválidos',
-          details: error.issues,
-        },
-        { status: 400 }
-      )
-    }
-
-    console.error('Erro ao buscar insights:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+function getErrorMessage(err: unknown): string {
+  if (err instanceof ZodError) {
+    return err.issues.map(issue => issue.message).join("; ");
   }
+  if (err instanceof Error) return err.message;
+  if (typeof err === "string") return err;
+  return "Erro desconhecido";
 }
 
-// POST /api/insights - Criar novo insight
-export async function POST(request: NextRequest) {
+export async function GET() {
+  const insights = await InsightService.listar();
+  return Response.json(insights);
+}
+
+export async function POST(req: Request) {
   try {
-    const body = await request.json()
-
-    // Validar dados de entrada
-    const validatedData = createInsightSchema.parse(body)
-
-    const insight = await insightService.create(validatedData)
-
-    return NextResponse.json(insight, { status: 201 })
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        {
-          error: 'Dados inválidos',
-          details: error.issues,
-        },
-        { status: 400 }
-      )
-    }
-
-    if (error instanceof Error) {
-      if (error.message === 'Empresa não encontrada') {
-        return NextResponse.json(
-          { error: error.message },
-          { status: 404 }
-        )
-      }
-    }
-
-    console.error('Erro ao criar insight:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    const body = await req.json();
+    const dados = InsightSchema.parse(body);
+    const novo = await InsightService.criar(dados);
+    return Response.json(novo, { status: 201 });
+  } catch (err: unknown) {
+    const status = err instanceof ZodError ? 422 : 400;
+    return Response.json({ erro: getErrorMessage(err) }, { status });
   }
 }

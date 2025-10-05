@@ -1,56 +1,41 @@
-import { parseUpdate } from '../../../schemas/metricas-mensais';
-import { 
-  deleteMetricasMensais, 
-  getMetricasMensais, 
-  updateMetricasMensais 
-} from '../../../services/metricas-mensais';
+import { MetricasMensaisService } from "@/app/(backend)/services/metricas-mensais";
+import { MetricasMensaisSchema } from "@/app/(backend)/schemas/metricas-mensais";
+import { ZodError } from "zod";
 
-function json(data: any, init: ResponseInit = {}) {
-  return new Response(JSON.stringify(data), {
-    ...init,
-    headers: { 'content-type': 'application/json; charset=utf-8', ...(init.headers || {}) },
-  });
+function getErrorMessage(err: unknown): string {
+  if (err instanceof ZodError) {
+    return err.issues.map((e: any) => e.message).join("; ");
+  }
+  if (err instanceof Error) return err.message;
+  if (typeof err === "string") return err;
+  return "Erro desconhecido";
 }
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
-  try {
-    const { id } = params;
-    const item = await getMetricasMensais({ id });
-    
-    if (!item) {
-      return json({ error: 'Métricas mensais não encontradas' }, { status: 404 });
-    }
-    
-    return json(item);
-  } catch (e: any) {
-    const msg = e?.message ?? 'Erro ao buscar métricas mensais';
-    return json({ error: msg }, { status: 500 });
+  const metrica = await MetricasMensaisService.buscarPorId(params.id);
+  if (!metrica) {
+    return Response.json({ erro: "Métrica não encontrada" }, { status: 404 });
   }
+  return Response.json(metrica);
 }
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   try {
-    const { id } = params;
     const body = await req.json();
-    const data = parseUpdate(body);
-
-    const updated = await updateMetricasMensais({ id }, data);
-    return json(updated);
-  } catch (e: any) {
-    const msg = e?.issues ? e.issues.map((i: any) => `${i.path.join('.')}: ${i.message}`).join(', ') : (e?.message ?? 'Erro ao atualizar métricas mensais');
-    const status = e?.issues ? 400 : e?.message?.includes('não encontradas') ? 404 : e?.message?.includes('Já existem métricas') ? 409 : 500;
-    return json({ error: msg }, { status });
+    const dados = MetricasMensaisSchema.parse(body);
+    const atualizado = await MetricasMensaisService.atualizar(params.id, dados);
+    return Response.json(atualizado);
+  } catch (err: unknown) {
+    const status = err instanceof ZodError ? 422 : 400;
+    return Response.json({ erro: getErrorMessage(err) }, { status });
   }
 }
 
 export async function DELETE(req: Request, { params }: { params: { id: string } }) {
   try {
-    const { id } = params;
-    const deleted = await deleteMetricasMensais({ id });
-    return json(deleted);
-  } catch (e: any) {
-    const msg = e?.message ?? 'Erro ao excluir métricas mensais';
-    const status = e?.message?.includes('não encontradas') ? 404 : 500;
-    return json({ error: msg }, { status });
+    await MetricasMensaisService.remover(params.id);
+    return Response.json({ sucesso: true });
+  } catch (err: unknown) {
+    return Response.json({ erro: getErrorMessage(err) }, { status: 400 });
   }
 }

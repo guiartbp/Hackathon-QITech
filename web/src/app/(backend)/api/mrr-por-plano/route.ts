@@ -1,86 +1,29 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { mrrPorPlanoService } from '@/app/(backend)/services/mrrPorPlano';
-import { CreateMrrPorPlanoSchema, QueryMrrPorPlanoSchema } from '@/app/(backend)/schemas/mrrPorPlano';
-import { z } from 'zod';
+import { MrrPorPlanoService } from "@/app/(backend)/services/mrr-por-plano";
+import { MrrPorPlanoSchema } from "@/app/(backend)/schemas/mrr-por-plano";
+import { ZodError } from "zod";
 
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    
-    const queryParams = {
-      empresaId: searchParams.get('empresaId') || undefined,
-      mesReferencia: searchParams.get('mesReferencia') || undefined,
-      nomePlano: searchParams.get('nomePlano') || undefined,
-      page: searchParams.get('page') || '1',
-      limit: searchParams.get('limit') || '10',
-      orderBy: searchParams.get('orderBy') || 'mesReferencia',
-      orderDirection: searchParams.get('orderDirection') || 'desc',
-    };
-
-    const validatedQuery = QueryMrrPorPlanoSchema.parse(queryParams);
-    const result = await mrrPorPlanoService.findMany(validatedQuery);
-
-    return NextResponse.json(result, { status: 200 });
-  } catch (error) {
-    console.error('Erro na rota GET /mrr-por-plano:', error);
-
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { 
-          error: 'Parâmetros de consulta inválidos',
-          details: error.issues
-        },
-        { status: 400 }
-      );
-    }
-
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    );
+function getErrorMessage(err: unknown): string {
+  if (err instanceof ZodError) {
+    return err.issues.map((e: any) => e.message).join("; ");
   }
+  if (err instanceof Error) return err.message;
+  if (typeof err === "string") return err;
+  return "Erro desconhecido";
 }
 
-export async function POST(request: NextRequest) {
+export async function GET() {
+  const mrrs = await MrrPorPlanoService.listar();
+  return Response.json(mrrs);
+}
+
+export async function POST(req: Request) {
   try {
-    const body = await request.json();
-    const validatedData = CreateMrrPorPlanoSchema.parse(body);
-    
-    const mrrPorPlano = await mrrPorPlanoService.create(validatedData);
-    
-    return NextResponse.json(mrrPorPlano, { status: 201 });
-  } catch (error) {
-    console.error('Erro na rota POST /mrr-por-plano:', error);
-
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { 
-          error: 'Dados de entrada inválidos',
-          details: error.issues
-        },
-        { status: 400 }
-      );
-    }
-
-    if (error instanceof Error) {
-      if (error.message.includes('Unique constraint')) {
-        return NextResponse.json(
-          { error: 'Já existe um MRR para este plano nesta empresa e mês de referência' },
-          { status: 409 }
-        );
-      }
-
-      if (error.message.includes('Foreign key constraint')) {
-        return NextResponse.json(
-          { error: 'Empresa não encontrada' },
-          { status: 404 }
-        );
-      }
-    }
-
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    );
+    const body = await req.json();
+    const dados = MrrPorPlanoSchema.parse(body);
+    const novo = await MrrPorPlanoService.criar(dados);
+    return Response.json(novo, { status: 201 });
+  } catch (err: unknown) {
+    const status = err instanceof ZodError ? 422 : 400;
+    return Response.json({ erro: getErrorMessage(err) }, { status });
   }
 }

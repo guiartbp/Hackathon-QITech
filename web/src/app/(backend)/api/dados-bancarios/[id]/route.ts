@@ -1,57 +1,54 @@
-import { parseUpdate } from '../../../schemas/dados-bancarios';
-import {
-  deleteDadosBancarios,
-  getDadosBancarios,
-  updateDadosBancarios,
-} from '../../../services/dados-bancarios';
+import { DadosBancariosService } from "@/app/(backend)/services/dados-bancarios";
+import { DadosBancariosSchema } from "@/app/(backend)/schemas/dados-bancarios";
+import { ZodError } from "zod";
 
-function json(data: any, init: ResponseInit = {}) {
-  return new Response(JSON.stringify(data), {
-    ...init,
-    headers: { 'content-type': 'application/json; charset=utf-8', ...(init.headers || {}) },
-  });
+function getErrorMessage(err: unknown): string {
+  if (err instanceof ZodError) {
+    return err.issues.map((e: any) => e.message).join("; ");
+  }
+  if (err instanceof Error) return err.message;
+  if (typeof err === "string") return err;
+  return "Erro desconhecido";
 }
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+export async function GET(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
   try {
-    const { id } = params;
-    
-    const item = await getDadosBancarios({ id });
-    if (!item) return json({ error: 'Dados bancários não encontrados' }, { status: 404 });
-    
-    return json(item);
-  } catch (e: any) {
-    const msg = e?.message ?? 'Erro ao buscar dados bancários';
-    return json({ error: msg }, { status: 500 });
+    const dadosBancarios = await DadosBancariosService.buscarPorId(params.id);
+    if (!dadosBancarios) {
+      return Response.json({ erro: "Dados bancários não encontrados" }, { status: 404 });
+    }
+    return Response.json(dadosBancarios);
+  } catch (err: unknown) {
+    return Response.json({ erro: getErrorMessage(err) }, { status: 400 });
   }
 }
 
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+export async function PATCH(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
   try {
-    const { id } = params;
     const body = await req.json();
-    const data = parseUpdate(body);
-
-    const updated = await updateDadosBancarios({ id }, data);
-    return json(updated);
-  } catch (e: any) {
-    const msg = e?.issues 
-      ? e.issues.map((i: any) => `${i.path.join('.')}: ${i.message}`).join(', ') 
-      : (e?.message ?? 'Erro ao atualizar dados bancários');
-    const status = e?.issues ? 400 : e?.code === 'P2025' ? 404 : 500;
-    return json({ error: msg }, { status });
+    const dados = DadosBancariosSchema.partial().parse(body);
+    const atualizado = await DadosBancariosService.atualizar(params.id, dados);
+    return Response.json(atualizado);
+  } catch (err: unknown) {
+    const status = err instanceof ZodError ? 422 : 400;
+    return Response.json({ erro: getErrorMessage(err) }, { status });
   }
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
   try {
-    const { id } = params;
-
-    const deleted = await deleteDadosBancarios({ id });
-    return json(deleted);
-  } catch (e: any) {
-    const msg = e?.message ?? 'Erro ao excluir dados bancários';
-    const status = e?.code === 'P2025' ? 404 : 500;
-    return json({ error: msg }, { status });
+    await DadosBancariosService.remover(params.id);
+    return Response.json({ sucesso: true }, { status: 200 });
+  } catch (err: unknown) {
+    return Response.json({ erro: getErrorMessage(err) }, { status: 400 });
   }
 }

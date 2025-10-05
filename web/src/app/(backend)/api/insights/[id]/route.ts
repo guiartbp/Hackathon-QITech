@@ -1,133 +1,50 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { insightService } from '../../../services/insight'
-import { updateInsightSchema, insightParamsSchema } from '../../../schemas/insight'
-import { z } from 'zod'
+import { InsightService } from "@/app/(backend)/services/insights";
+import { InsightSchema } from "@/app/(backend)/schemas/insights";
+import { ZodError } from "zod";
 
-interface RouteContext {
-  params: {
-    id: string
+function getErrorMessage(err: unknown): string {
+  if (err instanceof ZodError) {
+    return err.issues.map(issue => issue.message).join("; ");
   }
+  if (err instanceof Error) return err.message;
+  if (typeof err === "string") return err;
+  return "Erro desconhecido";
 }
 
-// GET /api/insights/[id] - Buscar insight por ID
 export async function GET(
-  request: NextRequest,
-  context: RouteContext
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  const insight = await InsightService.buscarPorId(params.id);
+  if (!insight) {
+    return Response.json({ erro: "Insight não encontrado" }, { status: 404 });
+  }
+  return Response.json(insight);
+}
+
+export async function PATCH(
+  req: Request,
+  { params }: { params: { id: string } }
 ) {
   try {
-    // Validar parâmetros da rota
-    const { id } = insightParamsSchema.parse(context.params)
-
-    const insight = await insightService.findById(id)
-
-    if (!insight) {
-      return NextResponse.json(
-        { error: 'Insight não encontrado' },
-        { status: 404 }
-      )
-    }
-
-    return NextResponse.json(insight)
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        {
-          error: 'Parâmetros inválidos',
-          details: error.issues,
-        },
-        { status: 400 }
-      )
-    }
-
-    console.error('Erro ao buscar insight:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    const body = await req.json();
+    const dados = InsightSchema.parse(body);
+    const atualizado = await InsightService.atualizar(params.id, dados);
+    return Response.json(atualizado);
+  } catch (err: unknown) {
+    const status = err instanceof ZodError ? 422 : 400;
+    return Response.json({ erro: getErrorMessage(err) }, { status });
   }
 }
 
-// PUT /api/insights/[id] - Atualizar insight
-export async function PUT(
-  request: NextRequest,
-  context: RouteContext
-) {
-  try {
-    // Validar parâmetros da rota
-    const { id } = insightParamsSchema.parse(context.params)
-
-    const body = await request.json()
-
-    // Validar dados de entrada
-    const validatedData = updateInsightSchema.parse(body)
-
-    const insight = await insightService.update(id, validatedData)
-
-    return NextResponse.json(insight)
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        {
-          error: 'Dados inválidos',
-          details: error.issues,
-        },
-        { status: 400 }
-      )
-    }
-
-    if (error instanceof Error) {
-      if (error.message === 'Insight não encontrado') {
-        return NextResponse.json(
-          { error: error.message },
-          { status: 404 }
-        )
-      }
-    }
-
-    console.error('Erro ao atualizar insight:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
-  }
-}
-
-// DELETE /api/insights/[id] - Deletar insight
 export async function DELETE(
-  request: NextRequest,
-  context: RouteContext
+  req: Request,
+  { params }: { params: { id: string } }
 ) {
   try {
-    // Validar parâmetros da rota
-    const { id } = insightParamsSchema.parse(context.params)
-
-    const insight = await insightService.delete(id)
-
-    return NextResponse.json(insight)
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        {
-          error: 'Parâmetros inválidos',
-          details: error.issues,
-        },
-        { status: 400 }
-      )
-    }
-
-    if (error instanceof Error) {
-      if (error.message === 'Insight não encontrado') {
-        return NextResponse.json(
-          { error: error.message },
-          { status: 404 }
-        )
-      }
-    }
-
-    console.error('Erro ao deletar insight:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    await InsightService.remover(params.id);
+    return Response.json({ sucesso: true });
+  } catch (err: unknown) {
+    return Response.json({ erro: getErrorMessage(err) }, { status: 400 });
   }
 }

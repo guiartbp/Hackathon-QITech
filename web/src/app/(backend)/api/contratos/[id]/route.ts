@@ -1,167 +1,50 @@
-import { NextRequest, NextResponse } from "next/server";
-import { ContratoService } from "../../../services/contratoService";
-import { updateContratoSchema } from "../../../schemas/contrato";
+import { ContratoService } from "@/app/(backend)/services/contratos";
+import { ContratoSchema } from "@/app/(backend)/schemas/contratos";
+import { ZodError } from "zod";
 
-const contratoService = new ContratoService();
+function getErrorMessage(err: unknown): string {
+  if (err instanceof ZodError) {
+    return err.issues.map(issue => issue.message).join("; ");
+  }
+  if (err instanceof Error) return err.message;
+  if (typeof err === "string") return err;
+  return "Erro desconhecido";
+}
 
-// GET /api/contratos/[id] - Buscar contrato por ID
 export async function GET(
-  request: NextRequest,
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  const contrato = await ContratoService.buscarPorId(params.id);
+  if (!contrato) {
+    return Response.json({ erro: "Contrato não encontrado" }, { status: 404 });
+  }
+  return Response.json(contrato);
+}
+
+export async function PATCH(
+  req: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = params;
-
-    if (!id) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "ID do contrato é obrigatório",
-        },
-        { status: 400 }
-      );
-    }
-
-    const contrato = await contratoService.getContratoById(id);
-
-    return NextResponse.json({
-      success: true,
-      data: contrato,
-    });
-  } catch (error) {
-    console.error("Erro ao buscar contrato:", error);
-
-    if (error instanceof Error && error.message.includes("não encontrado")) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Contrato não encontrado",
-          message: error.message,
-        },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Erro interno do servidor",
-        message: error instanceof Error ? error.message : "Erro desconhecido",
-      },
-      { status: 500 }
-    );
+    const body = await req.json();
+    const dados = ContratoSchema.parse(body);
+    const atualizado = await ContratoService.atualizar(params.id, dados);
+    return Response.json(atualizado);
+  } catch (err: unknown) {
+    const status = err instanceof ZodError ? 422 : 400;
+    return Response.json({ erro: getErrorMessage(err) }, { status });
   }
 }
 
-// PUT /api/contratos/[id] - Atualizar contrato
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const { id } = params;
-
-    if (!id) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "ID do contrato é obrigatório",
-        },
-        { status: 400 }
-      );
-    }
-
-    const body = await request.json();
-    const validatedData = updateContratoSchema.parse(body);
-
-    const contrato = await contratoService.updateContrato(id, validatedData);
-
-    return NextResponse.json({
-      success: true,
-      data: contrato,
-      message: "Contrato atualizado com sucesso",
-    });
-  } catch (error) {
-    console.error("Erro ao atualizar contrato:", error);
-
-    if (error instanceof Error && error.message.includes("não encontrado")) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Contrato não encontrado",
-          message: error.message,
-        },
-        { status: 404 }
-      );
-    }
-
-    if (error instanceof Error && error.message.includes("validation")) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Dados inválidos",
-          message: error.message,
-        },
-        { status: 400 }
-      );
-    }
-
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Erro interno do servidor",
-        message: error instanceof Error ? error.message : "Erro desconhecido",
-      },
-      { status: 500 }
-    );
-  }
-}
-
-// DELETE /api/contratos/[id] - Deletar contrato
 export async function DELETE(
-  request: NextRequest,
+  req: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = params;
-
-    if (!id) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "ID do contrato é obrigatório",
-        },
-        { status: 400 }
-      );
-    }
-
-    const result = await contratoService.deleteContrato(id);
-
-    return NextResponse.json({
-      success: true,
-      message: result.message,
-    });
-  } catch (error) {
-    console.error("Erro ao deletar contrato:", error);
-
-    if (error instanceof Error && error.message.includes("não encontrado")) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Contrato não encontrado",
-          message: error.message,
-        },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Erro interno do servidor",
-        message: error instanceof Error ? error.message : "Erro desconhecido",
-      },
-      { status: 500 }
-    );
+    await ContratoService.remover(params.id);
+    return Response.json({ sucesso: true });
+  } catch (err: unknown) {
+    return Response.json({ erro: getErrorMessage(err) }, { status: 400 });
   }
 }

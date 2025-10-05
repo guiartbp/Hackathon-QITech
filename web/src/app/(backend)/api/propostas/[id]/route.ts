@@ -1,97 +1,54 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { propostaService } from '../../../services/proposta'
-import { updatePropostaSchema } from '../../../schemas/proposta'
-import { ZodError } from 'zod'
+import { PropostaService } from "@/app/(backend)/services/propostas";
+import { PropostaSchema } from "@/app/(backend)/schemas/propostas";
+import { ZodError } from "zod";
 
-interface Params {
-  id: string
+function getErrorMessage(err: unknown): string {
+  if (err instanceof ZodError) {
+    return err.issues.map((e: any) => e.message).join("; ");
+  }
+  if (err instanceof Error) return err.message;
+  if (typeof err === "string") return err;
+  return "Erro desconhecido";
 }
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: Params }
+  req: Request,
+  { params }: { params: { id: string } }
 ) {
   try {
-    const proposta = await propostaService.findById(params.id)
-
+    const proposta = await PropostaService.buscarPorId(params.id);
     if (!proposta) {
-      return NextResponse.json(
-        { error: 'Proposta não encontrada' },
-        { status: 404 }
-      )
+      return Response.json({ erro: "Proposta não encontrada" }, { status: 404 });
     }
-
-    return NextResponse.json(proposta)
-  } catch (error) {
-    console.error('Erro ao buscar proposta:', error)
-    
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return Response.json(proposta);
+  } catch (err: unknown) {
+    return Response.json({ erro: getErrorMessage(err) }, { status: 400 });
   }
 }
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Params }
+export async function PATCH(
+  req: Request,
+  { params }: { params: { id: string } }
 ) {
   try {
-    const body = await request.json()
-    const validatedData = updatePropostaSchema.parse(body)
-
-    const proposta = await propostaService.update(params.id, validatedData)
-
-    return NextResponse.json(proposta)
-  } catch (error) {
-    console.error('Erro ao atualizar proposta:', error)
-    
-    if (error instanceof ZodError) {
-      return NextResponse.json(
-        { error: 'Dados inválidos', details: error.issues },
-        { status: 400 }
-      )
-    }
-    
-    if (error instanceof Error) {
-      if (error.message === 'Proposta não encontrada') {
-        return NextResponse.json(
-          { error: error.message },
-          { status: 404 }
-        )
-      }
-    }
-    
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    const body = await req.json();
+    const dados = PropostaSchema.partial().parse(body);
+    const atualizado = await PropostaService.atualizar(params.id, dados);
+    return Response.json(atualizado);
+  } catch (err: unknown) {
+    const status = err instanceof ZodError ? 422 : 400;
+    return Response.json({ erro: getErrorMessage(err) }, { status });
   }
 }
 
 export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Params }
+  req: Request,
+  { params }: { params: { id: string } }
 ) {
   try {
-    const proposta = await propostaService.delete(params.id)
-
-    return NextResponse.json(proposta)
-  } catch (error) {
-    console.error('Erro ao deletar proposta:', error)
-    
-    if (error instanceof Error) {
-      if (error.message === 'Proposta não encontrada') {
-        return NextResponse.json(
-          { error: error.message },
-          { status: 404 }
-        )
-      }
-    }
-    
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    await PropostaService.remover(params.id);
+    return Response.json({ sucesso: true }, { status: 200 });
+  } catch (err: unknown) {
+    return Response.json({ erro: getErrorMessage(err) }, { status: 400 });
   }
 }

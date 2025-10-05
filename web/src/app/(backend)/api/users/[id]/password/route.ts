@@ -2,12 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { blockForbiddenRequests, returnInvalidDataErrors, validBody, zodErrorHandler } from "@/utils/api";
 import { AllowedRoutes } from "@/types";
-import { idSchema, updatePasswordSchema } from "@/backend/schemas";
+import { idSchema, updatePasswordSchema } from "@/backend/schemas/";
 import { auth } from "@/auth";
-import { toErrorMessage } from "@/utils/api/toErrorMessage";
 
 const allowedRoles: AllowedRoutes = {
-  PATCH: ['SUPER_ADMIN', 'ADMIN', 'USER'],
+  PATCH: ['ADMIN', 'tomador', 'investidor'],
 }
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -23,7 +22,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     if (!idValidationResult.success) {
       return NextResponse.json(
-        toErrorMessage('ID Inválido'),
+        { error: 'ID inválido', details: idValidationResult.error.issues },
         { status: 400 }
       )
     }
