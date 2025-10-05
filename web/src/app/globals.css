@@ -189,12 +189,11 @@
   }
 
   .login-button {
-    @apply w-full p-2 cursor-pointer text-xl sm:text-2xl font-medium flex justify-center items-center gap-4;
+    @apply w-full p-2 cursor-pointer text-xl sm:text-2xl font-medium flex justify-center items-center gap-4 rounded-full;
     border-width: 1px 1px 3px;
     border-style: solid;
-    border-color: var(--color-pink-950);
-    border-bottom-color: var(--color-pink-800);
-    border-radius: 16px;
+    border-color: rgb(194 65 12); /* orange-700 */
+    border-bottom-color: rgb(154 52 18); /* orange-800 */
     letter-spacing: -0.03em;
   }
 
@@ -217,16 +216,23 @@
   }
 
   .auth-label {
-    @apply text-base font-semibold mb-2;
+    @apply text-base font-semibold mb-2 text-white;
   }
 
   .auth-input {
-    @apply text-base w-full px-4 py-3 border border-gray-400 rounded-xl focus:border-pink-400;
-    background-color: var(--color-gray-100);
+    @apply text-base w-full px-4 py-3 border border-gray-600 rounded-xl focus:border-orange-500 bg-gray-900 text-white placeholder:text-gray-400;
+  }
+
+  .auth-input-light {
+    @apply text-base w-full px-4 py-3 border border-gray-300 rounded-xl focus:border-black bg-white text-black placeholder:text-gray-500;
+  }
+
+  .auth-label-light {
+    @apply text-base font-semibold mb-2 text-black;
   }
 
   .auth-icon {
-    @apply right-2;
+    @apply right-2 text-gray-400;
   }
 
   .divisor {

@@ -14,7 +14,11 @@ const GoogleAuthButton = dynamic(() => import('@/components/auth/GoogleLoginButt
 const CredentialsButton = dynamic(() => import('@/components/auth/CredentialsButton'));
 const ValidatedInput = dynamic(() => import('@/components/input/ValidatedInput'));
 
-function CadastroForm() {
+interface CadastroFormProps {
+  isDarkBackground?: boolean;
+}
+
+function CadastroForm({ isDarkBackground = true }: CadastroFormProps = {}) {
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -48,17 +52,17 @@ function CadastroForm() {
 
   return ( 
     <div className="lg:w-[90%] xl:w-[80%]">
-      <h2 className="font-bold text-[40px] text-center leading-12">Cadastro</h2>
+      <h2 className={`font-bold text-[40px] text-center leading-12 ${isDarkBackground ? 'text-white' : 'text-black'}`}>Cadastro</h2>
       <form className="mt-6" onSubmit={handleSubmit}>
-      <ValidatedInput 
+        <ValidatedInput 
           title="Nome"
           placeholder="Pedro Salles"
           name="name"
           type="name"
           value={name}
           setValue={setName}
-          labelClassName='auth-label'
-          inputClassName='auth-input'
+          labelClassName={isDarkBackground ? 'auth-label' : 'auth-label-light'}
+          inputClassName={isDarkBackground ? 'auth-input' : 'auth-input-light'}
           iconContainerClassName="auth-icon"
           required
         ><RequiredTag/></ValidatedInput>
@@ -69,8 +73,8 @@ function CadastroForm() {
           type="email"
           value={email}
           setValue={setEmail}
-          labelClassName='auth-label'
-          inputClassName='auth-input'
+          labelClassName={isDarkBackground ? 'auth-label' : 'auth-label-light'}
+          inputClassName={isDarkBackground ? 'auth-input' : 'auth-input-light'}
           iconContainerClassName="auth-icon"
           required
         ><RequiredTag/></ValidatedInput>
@@ -83,29 +87,36 @@ function CadastroForm() {
           value={password}
           setValue={setPassword}
 
-          overrideValidate={(val) => val.length >= 6}
+          overrideValidate={(val: string) => val.length >= 6}
 
           containerClassName="mt-4"
-          labelClassName="auth-label"
-          inputClassName="auth-input"
+          labelClassName={isDarkBackground ? 'auth-label' : 'auth-label-light'}
+          inputClassName={isDarkBackground ? 'auth-input' : 'auth-input-light'}
           iconContainerClassName="auth-icon"
           required
-        ><RequiredTag/></ValidatedInput>
-
-        <LoginOptionals />
+        ><RequiredTag/></ValidatedInput>        <LoginOptionals />
 
         <CredentialsButton className="mt-6" disabled={loading}>Cadastrar</CredentialsButton>
       </form>
       
       <div className="flex items-center gap-4 py-5">
-        <div className="flex-grow h-0.5 bg-gray-400" />
-        <p className="text-gray-400 text-lg">ou</p>
-        <div className="flex-grow h-0.5 bg-gray-400" />
+        <div className={`flex-grow h-0.5 ${isDarkBackground ? 'bg-gray-600' : 'bg-gray-300'}`} />
+        <p className={`text-lg ${isDarkBackground ? 'text-gray-400' : 'text-gray-600'}`}>ou</p>
+        <div className={`flex-grow h-0.5 ${isDarkBackground ? 'bg-gray-600' : 'bg-gray-300'}`} />
       </div>
 
       <GoogleAuthButton disabled={loading} text="Entrar com Google" />
 
-      <Link href='/cadastro' className="block w-fit mt-8 text-sm group">Ainda não tem uma conta? <span className="text-pink-500 colorTransition border-b border-transparent group-hover:border-pink-500">Cadastre-se</span></Link>
+      <Link href='/login' className={`block w-fit mt-8 text-sm group ${isDarkBackground ? 'text-gray-400' : 'text-gray-600'}`}>
+        Já tem uma conta? 
+        <span className={`colorTransition border-b border-transparent group-hover:border-orange-500 ${
+          isDarkBackground ? 'text-orange-500' : 'text-black'
+        } ${
+          isDarkBackground ? '' : 'group-hover:border-black'
+        }`}>
+          Faça login
+        </span>
+      </Link>
     </div>
    );
 }

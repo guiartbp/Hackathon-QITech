@@ -86,7 +86,7 @@ function ValidatedInput({
       <div className={cn('relative inline-block', inputContainerClassName)}>
         <input
           {...rest}
-          className={cn('outline-none text-slate-900 placeholder:text-gray-500', inputClassName)}
+          className={cn('outline-none', inputClassName)}
           type={type === 'password' ? (showPassword ? 'text' : 'password') : type}
           name={name}
           id={name}

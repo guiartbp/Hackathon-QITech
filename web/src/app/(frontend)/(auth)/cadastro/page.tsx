@@ -1,112 +1,137 @@
 "use client";
 
+import { useState } from 'react';
 import CadastroForm from './CadastroForm';
 import Image from 'next/image';
 
+type UserType = 'investor' | 'founder';
+
 export default function CadastroPage() {
+  const [userType, setUserType] = useState<UserType>('investor');
+
+  const isInvestor = userType === 'investor';
+
+  const content = {
+    investor: {
+      title: "Potencialize seus retornos.",
+      subtitle: "Comece a investir em crescimento real hoje",
+      description: "Acesse um novo ativo rentável com risco controlado por métricas operacionais de SaaS",
+      image: "/investor-image.png", // You'll need to add this image
+      emoji: "📈"
+    },
+    founder: {
+      title: "Escale seu SaaS",
+      subtitle: "Capital não dilutivo para sua próxima fase",
+      description: "Receba capital baseado em receita sem perder equity da sua empresa",
+      image: "/founder-image.png", // You'll need to add this image
+      emoji: "🚀"
+    }
+  };
+
+  const currentContent = content[userType];
+
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen">
       <div className="grid lg:grid-cols-[2fr_3fr] min-h-screen">
         {/* Left side - Form */}
-        <div className="flex items-center justify-center px-8 py-16 bg-black">
+        <div className={`flex flex-col items-center justify-center px-8 py-16 transition-colors duration-500 ${
+          isInvestor ? 'bg-black' : 'bg-gradient-to-br from-orange-600 to-orange-700'
+        }`}>
+          {/* Toggle Button */}
+          <div className="w-full max-w-lg mb-8">
+            <div className="flex bg-gray-800 rounded-full p-1 w-fit mx-auto">
+              <button
+                onClick={() => setUserType('investor')}
+                className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+                  isInvestor 
+                    ? 'bg-orange-600 text-white shadow-lg' 
+                    : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                Investidor
+              </button>
+              <button
+                onClick={() => setUserType('founder')}
+                className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+                  !isInvestor 
+                    ? 'bg-black text-white shadow-lg' 
+                    : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                Founder
+              </button>
+            </div>
+          </div>
+
+          {/* Form */}
           <div className="w-full max-w-lg">
-            <CadastroForm />
+            <CadastroForm isDarkBackground={isInvestor} />
           </div>
         </div>
         
-        {/* Right side - Image placeholder */}
-        <div className="flex items-center justify-center bg-gradient-to-br from-orange-600 to-orange-700 text-white p-16">
+        {/* Right side - Content */}
+        <div className={`flex items-center justify-center p-16 transition-colors duration-500 ${
+          isInvestor 
+            ? 'bg-gradient-to-br from-orange-600 to-orange-700 text-white' 
+            : 'bg-black text-white'
+        }`}>
           <div className="text-center space-y-8">
             <h2 className="text-4xl md:text-6xl font-bold leading-tight">
-              Crie sua conta W1
+              {currentContent.title}
             </h2>
             <p className="text-xl md:text-2xl leading-relaxed max-w-md mx-auto">
-              Comece a transformar seu planejamento patrimonial hoje
+              {currentContent.subtitle}
             </p>
-            <div className="w-32 h-32 mx-auto bg-white/20 rounded-full flex items-center justify-center">
-              <div className="text-6xl">🚀</div>
-            </div>
-            <p className="text-lg text-orange-100 max-w-md mx-auto">
-              Sinta a sensação de <span className="text-cyan-300 font-semibold">transformar cada um dos seus objetivos em conquistas</span>
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-          </h1>
-          <p className="text-xl text-muted-foreground">
-            Invista em empresas SaaS selecionadas e ganhe com o crescimento delas
-          </p>
-        </div>
-
-        {/* Content box - discrete with orange border */}
-        <Card className="bg-card border-primary/20">
-          <CardContent className="p-8 space-y-8">
-          {/* Benefícios */}
-          <div className="space-y-4">
-            <div className="flex items-start gap-3">
-              <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="font-medium text-card-foreground">Retornos entre 12-18% ao ano</p>
-                <p className="text-sm text-muted-foreground">
-                  Investimentos em empresas SaaS com crescimento comprovado
-                </p>
+            
+            {/* Image or Emoji placeholder */}
+            <div className="flex justify-center">
+              <div className="w-40 h-40 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+                <div className="text-8xl">{currentContent.emoji}</div>
               </div>
             </div>
             
-            <div className="flex items-start gap-3">
-              <Shield className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="font-medium text-card-foreground">Diversificação automática</p>
-                <p className="text-sm text-muted-foreground">
-                  Seu capital é distribuído entre várias empresas
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-start gap-3">
-              <Clock className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="font-medium text-card-foreground">Liquidez flexível</p>
-                <p className="text-sm text-muted-foreground">
-                  Receba seus retornos mensalmente conforme o crescimento das empresas
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Tempo estimado */}
-          <div className="bg-accent border border-primary/20 rounded-lg p-4">
-            <div className="flex items-center gap-2 text-primary">
-              <Clock className="w-4 h-4" />
-              <span className="font-medium">Tempo estimado: 5-8 minutos</span>
-            </div>
-            <p className="text-sm text-muted-foreground mt-1">
-              Processo 100% digital e seguro
+            <p className={`text-lg max-w-md mx-auto leading-relaxed ${
+              isInvestor ? 'text-orange-100' : 'text-gray-300'
+            }`}>
+              {currentContent.description}
             </p>
+
+            {/* Mode-specific highlights */}
+            <div className="space-y-3 text-left max-w-md mx-auto">
+              {isInvestor ? (
+                <>
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 bg-cyan-400 rounded-full"></div>
+                    <span className="text-sm">Retornos de 12-18% ao ano</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 bg-cyan-400 rounded-full"></div>
+                    <span className="text-sm">Risco monitorado em tempo real</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 bg-cyan-400 rounded-full"></div>
+                    <span className="text-sm">Diversificação automática</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
+                    <span className="text-sm">Capital rápido e flexível</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
+                    <span className="text-sm">Sem diluição de equity</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
+                    <span className="text-sm">Pagamentos baseados em receita</span>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
-
-          {/* Call to Action */}
-          <Button 
-            onClick={() => router.push('/cadastro/nome')}
-            size="lg"
-            className="w-full"
-          >
-            Começar Cadastro →
-          </Button>
-
-          {/* Link para login */}
-          <p className="text-center text-sm text-muted-foreground">
-            Já tem conta?{' '}
-            <button 
-              onClick={() => router.push('/login')}
-              className="text-primary hover:underline"
-            >
-              Fazer login
-            </button>
-          </p>
-        </CardContent>
-      </Card>
+        </div>
       </div>
     </div>
   );
