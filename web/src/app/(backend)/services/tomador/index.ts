@@ -11,11 +11,10 @@ if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
 type WhereUnique = Prisma.TomadorWhereUniqueInput;
 
-function pickWhereUnique(params: { id?: string; uid_usuario?: string; cnpj?: string }): WhereUnique {
-  if (params.id) return { id: params.id };
-  if (params.uid_usuario) return { uid_usuario: params.uid_usuario };
-  if (params.cnpj) return { cnpj: params.cnpj };
-  throw new Error('Informe id, uid_usuario ou cnpj');
+function pickWhereUnique(params: { id?: string; uid_usuario?: string }): WhereUnique {
+  if (params.id) return { id: parseInt(params.id) };
+  if (params.uid_usuario) return { uidUsuario: params.uid_usuario };
+  throw new Error('Informe id ou uid_usuario');
 }
 
 export async function createTomador(data: Prisma.TomadorCreateInput) {

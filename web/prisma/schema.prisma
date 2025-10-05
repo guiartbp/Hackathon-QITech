@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -8,7 +9,7 @@ datasource db {
 }
 
 model Investidor {
-  id                     Int            @id @default(autoincrement())
+  id                     String         @id @default(uuid())
   uidUsuario             String         @unique @map("uid_usuario")
   tipoPessoa             String         @map("tipo_pessoa")
   documentoIdentificacao String         @unique @map("documento_identificacao")
@@ -29,7 +30,7 @@ model Investidor {
 }
 
 model Tomador {
-  id               Int      @id @default(autoincrement())
+  id               String   @id @default(uuid())
   uidUsuario       String   @unique @map("uid_usuario")
   nomeCompleto     String   @map("nome_completo")
   email            String
@@ -43,8 +44,8 @@ model Tomador {
 }
 
 model DadosBancarios {
-  id              Int       @id @default(autoincrement())
-  usuarioId       Int       @map("usuario_id")
+  id              String    @id @default(uuid())
+  usuarioId       String    @map("usuario_id")
   tipoUsuario     String    @map("tipo_usuario")
   banco           String?
   agencia         String?
@@ -61,8 +62,8 @@ model DadosBancarios {
 }
 
 model Empresa {
-  id                  Int                   @id @default(autoincrement())
-  tomadorId           Int                   @unique @map("tomador_id")
+  id                  String                @id @default(uuid())
+  tomadorId           String                @unique @map("tomador_id")
   cnpj                String                @unique
   razaoSocial         String                @map("razao_social")
   nomeFantasia        String?               @map("nome_fantasia")
@@ -97,8 +98,8 @@ model Empresa {
 }
 
 model HistoricoFinanceiro {
-  id                    Int      @id @default(autoincrement())
-  empresaId             Int      @map("empresa_id")
+  id                    String   @id @default(uuid())
+  empresaId             String   @map("empresa_id")
   periodo               DateTime @db.Date
   tipoRelatorio         String?  @map("tipo_relatorio")
   ativoTotal            Decimal? @map("ativo_total") @db.Decimal(15, 2)
@@ -118,8 +119,8 @@ model HistoricoFinanceiro {
 }
 
 model MetricasTempoReal {
-  id               Int      @id @default(autoincrement())
-  empresaId        Int      @map("empresa_id")
+  id               String   @id @default(uuid())
+  empresaId        String   @map("empresa_id")
   timestampCaptura DateTime @default(now()) @map("timestamp_captura")
   mrr              Decimal? @db.Decimal(15, 2)
   arr              Decimal? @db.Decimal(15, 2)
@@ -137,8 +138,8 @@ model MetricasTempoReal {
 }
 
 model MetricasMensais {
-  id                          Int      @id @default(autoincrement())
-  empresaId                   Int      @map("empresa_id")
+  id                          String   @id @default(uuid())
+  empresaId                   String   @map("empresa_id")
   mesReferencia               DateTime @map("mes_referencia") @db.Date
   mrrFinal                    Decimal? @map("mrr_final") @db.Decimal(15, 2)
   mrrMedio                    Decimal? @map("mrr_medio") @db.Decimal(15, 2)
@@ -177,8 +178,8 @@ model MetricasMensais {
 }
 
 model EvolucaoMetricas {
-  id             Int      @id @default(autoincrement())
-  empresaId      Int      @map("empresa_id")
+  id             String   @id @default(uuid())
+  empresaId      String   @map("empresa_id")
   dataReferencia DateTime @map("data_referencia") @db.Date
   tipoPeriodo    String   @map("tipo_periodo")
   arr            Decimal? @db.Decimal(15, 2)
@@ -193,8 +194,8 @@ model EvolucaoMetricas {
 }
 
 model MrrPorPlano {
-  id               Int      @id @default(autoincrement())
-  empresaId        Int      @map("empresa_id")
+  id               String   @id @default(uuid())
+  empresaId        String   @map("empresa_id")
   mesReferencia    DateTime @map("mes_referencia") @db.Date
   nomePlano        String   @map("nome_plano")
   mrrPlano         Decimal  @map("mrr_plano") @db.Decimal(15, 2)
@@ -209,8 +210,8 @@ model MrrPorPlano {
 }
 
 model TopClientes {
-  id                 Int      @id @default(autoincrement())
-  empresaId          Int      @map("empresa_id")
+  id                 String   @id @default(uuid())
+  empresaId          String   @map("empresa_id")
   mesReferencia      DateTime @map("mes_referencia") @db.Date
   clienteNome        String   @map("cliente_nome")
   clienteEmoji       String?  @map("cliente_emoji")
@@ -225,8 +226,8 @@ model TopClientes {
 }
 
 model Cohorts {
-  id               Int      @id @default(autoincrement())
-  empresaId        Int      @map("empresa_id")
+  id               String   @id @default(uuid())
+  empresaId        String   @map("empresa_id")
   cohortMes        DateTime @map("cohort_mes") @db.Date
   clientesIniciais Int      @map("clientes_iniciais")
   retencaoM0       Decimal  @default(100.00) @map("retencao_m0") @db.Decimal(8, 2)
@@ -246,8 +247,8 @@ model Cohorts {
 }
 
 model Score {
-  id               Int                 @id @default(autoincrement())
-  empresaId        Int                 @map("empresa_id")
+  id               String              @id @default(uuid())
+  empresaId        String              @map("empresa_id")
   scoreTotal       Int                 @map("score_total")
   tier             String
   variacaoMensal   Int?                @map("variacao_mensal")
@@ -264,8 +265,8 @@ model Score {
 }
 
 model ScoreCategoria {
-  id             Int            @id @default(autoincrement())
-  scoreId        Int            @map("score_id")
+  id             String         @id @default(uuid())
+  scoreId        String         @map("score_id")
   categoria      String
   scoreCategoria Int            @map("score_categoria")
   criadoEm       DateTime       @default(now()) @map("criado_em")
@@ -277,8 +278,8 @@ model ScoreCategoria {
 }
 
 model ScoreFeature {
-  id               Int            @id @default(autoincrement())
-  scoreCategoriaId Int            @map("score_categoria_id")
+  id               String         @id @default(uuid())
+  scoreCategoriaId String         @map("score_categoria_id")
   featureNome      String         @map("feature_nome")
   featureValor     Decimal?       @map("feature_valor") @db.Decimal(15, 4)
   featurePeso      Int?           @map("feature_peso")
@@ -290,8 +291,8 @@ model ScoreFeature {
 }
 
 model ScoreRecomendacao {
-  id              Int      @id @default(autoincrement())
-  scoreId         Int      @map("score_id")
+  id              String   @id @default(uuid())
+  scoreId         String   @map("score_id")
   titulo          String
   descricao       String
   categoria       String
@@ -305,8 +306,8 @@ model ScoreRecomendacao {
 }
 
 model Insight {
-  id            Int       @id @default(autoincrement())
-  empresaId     Int       @map("empresa_id")
+  id            String    @id @default(uuid())
+  empresaId     String    @map("empresa_id")
   tipo          String
   categoria     String?
   titulo        String
@@ -323,8 +324,8 @@ model Insight {
 }
 
 model Proposta {
-  id                 Int            @id @default(autoincrement())
-  empresaId          Int            @map("empresa_id")
+  id                 String         @id @default(uuid())
+  empresaId          String         @map("empresa_id")
   valorSolicitado    Decimal        @map("valor_solicitado") @db.Decimal(15, 2)
   multiploCap        Decimal        @map("multiplo_cap") @db.Decimal(4, 2)
   percentualMrr      Decimal        @map("percentual_mrr") @db.Decimal(8, 2)
@@ -350,9 +351,9 @@ model Proposta {
 }
 
 model Contrato {
-  id                    Int                 @id @default(autoincrement())
-  propostaId            Int                 @unique @map("proposta_id")
-  empresaId             Int                 @map("empresa_id")
+  id                    String              @id @default(uuid())
+  propostaId            String              @unique @map("proposta_id")
+  empresaId             String              @map("empresa_id")
   valorPrincipal        Decimal             @map("valor_principal") @db.Decimal(15, 2)
   multiploCap           Decimal             @map("multiplo_cap") @db.Decimal(4, 2)
   percentualMrr         Decimal             @map("percentual_mrr") @db.Decimal(8, 2)
@@ -364,7 +365,7 @@ model Contrato {
   valorTotalPago        Decimal             @default(0) @map("valor_total_pago") @db.Decimal(15, 2)
   percentualPago        Decimal             @default(0) @map("percentual_pago") @db.Decimal(8, 2)
   multiploAtingido      Decimal             @default(0) @map("multiplo_atingido") @db.Decimal(4, 2)
-  ultimaMetricaMensalId Int?                @map("ultima_metrica_mensal_id")
+  ultimaMetricaMensalId String?             @map("ultima_metrica_mensal_id")
   criadoEm              DateTime            @default(now()) @map("criado_em")
   atualizadoEm          DateTime            @default(now()) @updatedAt @map("atualizado_em")
   empresa               Empresa             @relation(fields: [empresaId], references: [id], onDelete: Cascade)
@@ -380,10 +381,10 @@ model Contrato {
 }
 
 model Investimento {
-  id                     Int        @id @default(autoincrement())
-  propostaId             Int?       @map("proposta_id")
-  contratoId             Int?       @map("contrato_id")
-  investidorId           Int        @map("investidor_id")
+  id                     String     @id @default(uuid())
+  propostaId             String?    @map("proposta_id")
+  contratoId             String?    @map("contrato_id")
+  investidorId           String     @map("investidor_id")
   valorAportado          Decimal    @map("valor_aportado") @db.Decimal(15, 2)
   percentualParticipacao Decimal?   @map("percentual_participacao") @db.Decimal(8, 4)
   statusInvestimento     String     @default("PENDENTE") @map("status_investimento")
@@ -402,8 +403,8 @@ model Investimento {
 }
 
 model Pagamento {
-  id                 Int       @id @default(autoincrement())
-  contratoId         Int       @map("contrato_id")
+  id                 String    @id @default(uuid())
+  contratoId         String    @map("contrato_id")
   tipoPagamento      String    @map("tipo_pagamento")
   dataVencimento     DateTime  @map("data_vencimento") @db.Date
   dataPagamento      DateTime? @map("data_pagamento") @db.Date
@@ -427,10 +428,10 @@ model Pagamento {
 }
 
 model Repasse {
-  id                 Int          @id @default(autoincrement())
-  pagamentoId        Int          @map("pagamento_id")
-  investimentoId     Int          @map("investimento_id")
-  investidorId       Int          @map("investidor_id")
+  id                 String       @id @default(uuid())
+  pagamentoId        String       @map("pagamento_id")
+  investimentoId     String       @map("investimento_id")
+  investidorId       String       @map("investidor_id")
   valorRepasse       Decimal      @map("valor_repasse") @db.Decimal(15, 2)
   principalDevolvido Decimal?     @map("principal_devolvido") @db.Decimal(15, 2)
   retornoBruto       Decimal?     @map("retorno_bruto") @db.Decimal(15, 2)
@@ -447,11 +448,11 @@ model Repasse {
 }
 
 model ProjecaoPagamento {
-  id             Int      @id @default(autoincrement())
-  contratoId     Int      @map("contrato_id")
+  id             String   @id @default(uuid())
+  contratoId     String   @map("contrato_id")
   mesReferencia  DateTime @map("mes_referencia") @db.Date
-  valorProjetado Decimal  @map("valor_projetado") @db.Decimal(15, 2)
   mrrProjetado   Decimal? @map("mrr_projetado") @db.Decimal(15, 2)
+  valorProjetado Decimal  @map("valor_projetado") @db.Decimal(15, 2)
   confianca      Decimal? @db.Decimal(8, 2)
   metodoProjecao String?  @map("metodo_projecao")
   criadoEm       DateTime @default(now()) @map("criado_em")
@@ -463,9 +464,9 @@ model ProjecaoPagamento {
 }
 
 model AuditLog {
-  id              Int      @id @default(autoincrement())
+  id              String   @id @default(uuid())
   entidade        String
-  entidadeId      Int      @map("entidade_id")
+  entidadeId      String   @map("entidade_id")
   acao            String
   usuarioId       String   @map("usuario_id")
   dadosAnteriores Json?    @map("dados_anteriores")

@@ -1,27 +1,20 @@
 import { z } from 'zod';
 import type { Prisma } from '../../../../generated/prisma';
 
+// Campos graváveis baseados no modelo Tomador do Prisma
 const writable = {
-  uid_usuario: z.string().min(1).optional(),
-  cnpj: z.string().min(1),
-  razao_social: z.string().min(1),
-  segmento: z.string().optional(),
-  estagio_investimento: z.string().min(1),
-  produto: z.string().optional(),
-  conta_bancaria_principal: z.string().optional(),
-  plano_uso_fundos: z.string().optional(),
+  uid_usuario: z.string().min(1),
+  nome_completo: z.string().min(1),
+  email: z.string().email(),
+  cargo: z.string().optional(),
   status_compliance: z.string().optional(), // default 'PENDENTE' no banco
 };
 
 const tomadorCreateSchema = z.object({
   uid_usuario: writable.uid_usuario,
-  cnpj: writable.cnpj,
-  razao_social: writable.razao_social,
-  segmento: writable.segmento,
-  estagio_investimento: writable.estagio_investimento,
-  produto: writable.produto,
-  conta_bancaria_principal: writable.conta_bancaria_principal,
-  plano_uso_fundos: writable.plano_uso_fundos,
+  nome_completo: writable.nome_completo,
+  email: writable.email,
+  cargo: writable.cargo,
   status_compliance: writable.status_compliance,
 });
 
@@ -33,7 +26,7 @@ const tomadorUpdateSchema = tomadorCreateSchema.partial().refine(
 const tomadorQuerySchema = z.object({
   id: z.string().optional(),
   uid_usuario: z.string().optional(),
-  cnpj: z.string().optional(),
+  email: z.string().optional(),
   search: z.string().optional(),
   skip: z.coerce.number().int().min(0).optional(),
   take: z.coerce.number().int().min(1).max(100).optional(),
@@ -58,7 +51,7 @@ export function parseQuery(url: string): TomadorQueryDTO {
   return tomadorQuerySchema.parse({
     id: sp.get('id') ?? undefined,
     uid_usuario: sp.get('uid_usuario') ?? undefined,
-    cnpj: sp.get('cnpj') ?? undefined,
+    email: sp.get('email') ?? undefined,
     search: sp.get('search') ?? undefined,
     skip: sp.get('skip') ?? undefined,
     take: sp.get('take') ?? undefined,
