@@ -46,7 +46,7 @@ function LoginForm() {
 
   return ( 
     <div className="lg:w-[90%] xl:w-[80%]">
-      <h2 className="font-bold text-[40px] text-center leading-12">Continue seu aprendizado</h2>
+
       <form className="mt-6" onSubmit={handleSubmit}>
         <ValidatedInput 
           title="E-mail"
@@ -97,3 +97,4 @@ function LoginForm() {
 }
 
 export default LoginForm;
+

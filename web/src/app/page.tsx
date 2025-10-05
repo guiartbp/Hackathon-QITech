@@ -11,8 +11,35 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen">
+      {/* Header */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-black border-b border-gray-800">
+        <div className="max-w-7xl mx-auto px-8 py-4 flex items-center justify-between">
+          {/* Logo */}
+          <div className="flex items-center">
+            <Image
+              src="/logo-will.png"
+              alt="Will Logo"
+              width={40}
+              height={40}
+              className="mr-3"
+            />
+            <span className="text-white font-bold text-xl">Will</span>
+          </div>
+          
+          {/* Navigation */}
+          <nav className="flex items-center space-x-8">
+            <button
+              onClick={() => router.push('/login')}
+              className="text-orange-500 hover:text-orange-400 font-medium transition-colors duration-200"
+            >
+              Login
+            </button>
+          </nav>
+        </div>
+      </header>
+
       {/* Hero Section - Black Background */}
-      <section className="relative min-h-screen bg-black text-white overflow-hidden">
+      <section className="relative min-h-screen bg-black text-white overflow-hidden pt-20">
         <div className="grid lg:grid-cols-[3fr_2fr] min-h-screen">
           {/* Left side - Content */}
           <div className="flex flex-col justify-center px-8 lg:px-16 py-16">
@@ -29,7 +56,7 @@ export default function HomePage() {
             
             {/* Main Title */}
             <h1 className="text-4xl md:text-6xl font-bold leading-tight mb-8">
-              Will: <span className="text-orange-500">A faísca que une o Founder ao Investidor</span>
+             <span className="text-orange-500">A faísca que une o Founder ao Investidor</span>
             </h1>
             
             {/* Subtitle */}
