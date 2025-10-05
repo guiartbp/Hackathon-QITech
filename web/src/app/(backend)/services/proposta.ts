@@ -1,9 +1,177 @@
 import { PrismaClient, Proposta, Prisma } from '@/generated/prisma'
-import { CreatePropostaData, UpdatePropostaData, PropostaQuery } from '../schemas/proposta'
+import { CreatePropostaData, UpdatePropostaData, PropostaQuery, MarketplaceQuery } from '../schemas/proposta'
 
 const prisma = new PrismaClient()
 
 export class PropostaService {
+  // Buscar todas as propostas para marketplace com informações necessárias
+  async findForMarketplace(query: MarketplaceQuery): Promise<any[]> {
+    const {
+      statusFunding,
+      valorSolicitadoMin,
+      valorSolicitadoMax,
+      progressoFundingMin,
+      progressoFundingMax,
+      scoreMin,
+      scoreMax,
+      tier,
+      segmento,
+      setor,
+      search,
+      limit = 50,
+      offset = 0,
+      sortBy = 'criadoEm',
+      sortOrder = 'desc'
+    } = query
+
+    const where: Prisma.PropostaWhereInput = {}
+
+    // Filtros apenas para propostas ativas/abertas no marketplace
+    if (statusFunding) {
+      where.statusFunding = {
+        contains: statusFunding,
+        mode: 'insensitive'
+      }
+    } else {
+      where.statusFunding = {
+        in: ['ABERTA', 'ATIVA', 'EM_ANDAMENTO']
+      }
+    }
+
+    // Filtros por faixa de valor solicitado
+    if (valorSolicitadoMin || valorSolicitadoMax) {
+      where.valorSolicitado = {}
+      if (valorSolicitadoMin) {
+        where.valorSolicitado.gte = valorSolicitadoMin
+      }
+      if (valorSolicitadoMax) {
+        where.valorSolicitado.lte = valorSolicitadoMax
+      }
+    }
+
+    // Filtros por faixa de progresso de funding
+    if (progressoFundingMin || progressoFundingMax) {
+      where.progressoFunding = {}
+      if (progressoFundingMin) {
+        where.progressoFunding.gte = progressoFundingMin
+      }
+      if (progressoFundingMax) {
+        where.progressoFunding.lte = progressoFundingMax
+      }
+    }
+
+    // Filtros por empresa
+    const empresaFilters: any = {}
+
+    if (segmento) {
+      empresaFilters.segmento = {
+        contains: segmento,
+        mode: 'insensitive'
+      }
+    }
+
+    if (setor) {
+      empresaFilters.setor = {
+        contains: setor,
+        mode: 'insensitive'
+      }
+    }
+
+    if (search) {
+      empresaFilters.OR = [
+        {
+          razaoSocial: {
+            contains: search,
+            mode: 'insensitive'
+          }
+        },
+        {
+          nomeFantasia: {
+            contains: search,
+            mode: 'insensitive'
+          }
+        }
+      ]
+    }
+
+    // Filtros por score
+    if (scoreMin || scoreMax || tier) {
+      empresaFilters.scores = {
+        some: {
+          ...(scoreMin && { scoreTotal: { gte: scoreMin } }),
+          ...(scoreMax && { scoreTotal: { lte: scoreMax } }),
+          ...(tier && { tier: { contains: tier, mode: 'insensitive' } })
+        }
+      }
+    }
+
+    if (Object.keys(empresaFilters).length > 0) {
+      where.empresa = empresaFilters
+    }
+
+    const propostas = await prisma.proposta.findMany({
+      where,
+      orderBy: {
+        [sortBy]: sortOrder,
+      },
+      take: limit,
+      skip: offset,
+      include: {
+        empresa: {
+          select: {
+            id: true,
+            razaoSocial: true,
+            nomeFantasia: true,
+            emoji: true,
+            segmento: true,
+            setor: true,
+            scores: {
+              orderBy: {
+                criadoEm: 'desc'
+              },
+              take: 1,
+              select: {
+                scoreTotal: true,
+                tier: true
+              }
+            }
+          }
+        }
+      },
+    })
+
+    // Transformar dados para o formato esperado pelo marketplace
+    return propostas.map(proposta => {
+      const score = proposta.empresa.scores[0]
+      const progressoPercentual = Number(proposta.valorSolicitado) > 0
+        ? (Number(proposta.valorFinanciado) / Number(proposta.valorSolicitado)) * 100
+        : 0
+
+      return {
+        id: proposta.id,
+        nome: proposta.empresa.nomeFantasia || proposta.empresa.razaoSocial,
+        emoji: proposta.empresa.emoji || '🏢',
+        score: score?.scoreTotal || 0,
+        scoreLabel: score?.tier || 'N/A',
+        valor: Number(proposta.valorSolicitado),
+        valorSolicitado: Number(proposta.valorSolicitado),
+        valorFinanciado: Number(proposta.valorFinanciado),
+        rendimento: Number(proposta.multiploCap) * 100 - 100, // Convertendo múltiplo para rendimento %
+        prazo: proposta.duracaoMeses,
+        progressoFunding: Math.round(progressoPercentual * 100) / 100,
+        statusFunding: proposta.statusFunding,
+        scoreNaAbertura: proposta.scoreNaAbertura,
+        empresa: {
+          id: proposta.empresa.id,
+          razaoSocial: proposta.empresa.razaoSocial,
+          nomeFantasia: proposta.empresa.nomeFantasia,
+          segmento: proposta.empresa.segmento,
+          setor: proposta.empresa.setor
+        }
+      }
+    })
+  }
+
   // Buscar todas as propostas com filtros e paginação
   async findMany(query: PropostaQuery): Promise<Proposta[]> {
     const {

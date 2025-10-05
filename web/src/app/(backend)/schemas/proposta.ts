@@ -53,6 +53,25 @@ export const propostaQuerySchema = z.object({
   sortOrder: z.enum(['asc', 'desc']).optional().default('desc'),
 })
 
+// Schema específico para marketplace com filtros de score
+export const marketplaceQuerySchema = z.object({
+  statusFunding: z.string().optional(),
+  valorSolicitadoMin: z.number().positive().optional(),
+  valorSolicitadoMax: z.number().positive().optional(),
+  progressoFundingMin: z.number().min(0).max(100).optional(),
+  progressoFundingMax: z.number().min(0).max(100).optional(),
+  scoreMin: z.number().min(0).max(1000).optional(),
+  scoreMax: z.number().min(0).max(1000).optional(),
+  tier: z.string().optional(),
+  segmento: z.string().optional(),
+  setor: z.string().optional(),
+  search: z.string().optional(),
+  limit: z.number().int().min(1).max(100).optional().default(50),
+  offset: z.number().int().min(0).optional().default(0),
+  sortBy: z.enum(['criadoEm', 'atualizadoEm', 'valorSolicitado', 'progressoFunding', 'scoreTotal']).optional().default('criadoEm'),
+  sortOrder: z.enum(['asc', 'desc']).optional().default('desc'),
+})
+
 // Schema para parâmetros de rota
 export const propostaParamsSchema = z.object({
   id: z.string().uuid('ID deve ser um UUID válido'),
@@ -62,4 +81,5 @@ export const propostaParamsSchema = z.object({
 export type CreatePropostaData = z.infer<typeof createPropostaSchema>
 export type UpdatePropostaData = z.infer<typeof updatePropostaSchema>
 export type PropostaQuery = z.infer<typeof propostaQuerySchema>
+export type MarketplaceQuery = z.infer<typeof marketplaceQuerySchema>
 export type PropostaParams = z.infer<typeof propostaParamsSchema>

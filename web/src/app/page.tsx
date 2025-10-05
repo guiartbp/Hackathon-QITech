@@ -2,171 +2,349 @@
 
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, Shield, DollarSign, Users, Sparkles } from 'lucide-react';
+import { GradientDotsOrange } from '@/components/ui/gradient-dots-orange';
+import { TrendingUp, Shield, DollarSign, Users, Sparkles, Rocket, Target, BarChart3, Lock, Brain, CheckCircle } from 'lucide-react';
+import Image from 'next/image';
 
 export default function HomePage() {
   const router = useRouter();
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Hero Section */}
-      <div className="w-full px-8 py-16">
-        <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium mb-6">
-            <Sparkles className="w-4 h-4" />
-            Plataforma P2P para Venture Debt
+    <div className="min-h-screen">
+      {/* Hero Section - Black Background */}
+      <section className="relative min-h-screen bg-black text-white overflow-hidden">
+        <div className="grid lg:grid-cols-[3fr_2fr] min-h-screen">
+          {/* Left side - Content */}
+          <div className="flex flex-col justify-center px-8 lg:px-16 py-16">
+            {/* Logo */}
+            <div className="flex items-center mb-8">
+              <Image
+                src="/logo-will.png"
+                alt="Will Logo"
+                width={150}
+                height={150}
+                className="mr-4"
+              />
+            </div>
+            
+            {/* Main Title */}
+            <h1 className="text-4xl md:text-6xl font-bold leading-tight mb-8">
+              Will: <span className="text-orange-500">A faísca que une o Founder ao Investidor</span>
+            </h1>
+            
+            {/* Subtitle */}
+            <p className="text-xl md:text-2xl text-gray-300 leading-relaxed mb-12">
+              Capital de crescimento não dilutivo para te levar à próxima fase. 
+              O caminho seguro para investir em crescimento real, com risco reduzido.
+            </p>
+            
+            {/* Single CTA */}
+            <div className="flex justify-start">
+              <Button 
+                onClick={() => router.push('/cadastro')}
+                size="lg"
+                className="px-12 py-4 text-lg bg-orange-600 hover:bg-orange-700 text-white border-none rounded-full"
+              >
+                Quero entrar no ecossistema
+              </Button>
+            </div>
           </div>
           
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 text-foreground">
-            will.lending
-          </h1>
+          {/* Right side - Image */}
+          <div className="relative flex items-center justify-center lg:justify-end">
+            <div className="w-full h-full flex items-center justify-center">
+              <Image
+                src="/hero.png"
+                alt="Will connecting founders and investors"
+                width={1500}
+                height={1500}
+                className="object-contain max-w-full max-h-full"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Problem Section - Black Background */}
+      <section className="bg-black text-white py-20 px-8">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 text-orange-400">
+            O Problema que Resolvemos
+          </h2>
           
-          <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto">
-            Invista em empresas SaaS selecionadas e ganhe com o crescimento delas. 
-            Venture Debt democratizado para todos os investidores.
+          <div className="grid md:grid-cols-2 gap-12">
+            {/* For SaaS */}
+            <div className="bg-gray-900 p-10 rounded-2xl border border-gray-800">
+              <div className="flex items-center gap-4 mb-6">
+                <Rocket className="w-12 h-12 text-orange-500" />
+                <h3 className="text-2xl font-bold">Para SaaS</h3>
+              </div>
+              <p className="text-lg text-gray-300 leading-relaxed">
+                "Você construiu um produto incrível, tem receita recorrente previsível e está crescendo rápido. 
+                Mas para escalar precisa de marketing, contratações e comunidade. O problema? Bancos não entendem 
+                SaaS e o Venture Capital cobra caro em diluição."
+              </p>
+            </div>
+            
+            {/* For Investors */}
+            <div className="bg-gray-900 p-10 rounded-2xl border border-gray-800">
+              <div className="flex items-center gap-4 mb-6">
+                <Target className="w-12 h-12 text-orange-500" />
+                <h3 className="text-2xl font-bold">Para Investidores</h3>
+              </div>
+              <p className="text-lg text-gray-300 leading-relaxed">
+                "No outro lado, investidores em busca de ativos rentáveis sofrem com juros baixos em produtos 
+                tradicionais e alta volatilidade em equity. O Venture Debt baseado em receita oferece retornos 
+                elevados, atrelados à performance de empresas de software com contratos recorrentes."
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Solution Section - Orange Background */}
+      <section className="bg-gradient-to-br from-orange-600 to-orange-700 text-white py-20 px-8">
+        <div className="max-w-6xl mx-auto text-center">
+          <h2 className="text-4xl md:text-5xl font-bold mb-8">
+            A Solução Will
+          </h2>
+          <h3 className="text-2xl md:text-3xl font-semibold mb-12">
+            O futuro do financiamento SaaS é baseado em receita.
+          </h3>
+          
+          <p className="text-xl mb-16 max-w-4xl mx-auto leading-relaxed">
+            O Will oferece contratos de dívida inteligentes: os pagamentos se ajustam ao crescimento da empresa.
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="grid md:grid-cols-3 gap-8 mb-16">
+            <div className="bg-white/10 backdrop-blur-sm p-8 rounded-2xl">
+              <BarChart3 className="w-16 h-16 mx-auto mb-6 text-white" />
+              <p className="text-lg">Em meses de alta, a dívida é quitada mais rápido.</p>
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm p-8 rounded-2xl">
+              <Shield className="w-16 h-16 mx-auto mb-6 text-white" />
+              <p className="text-lg">Em meses de baixa, o caixa da startup é preservado.</p>
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm p-8 rounded-2xl">
+              <TrendingUp className="w-16 h-16 mx-auto mb-6 text-white" />
+              <p className="text-lg">O investidor tem retorno com teto definido (ex: até 1.3x o capital).</p>
+            </div>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-8">
+            <div className="bg-black/20 backdrop-blur-sm p-10 rounded-2xl">
+              <h4 className="text-2xl font-bold mb-4">Para SaaS</h4>
+              <p className="text-lg">Capital rápido, flexível, sem diluição.</p>
+            </div>
+            <div className="bg-black/20 backdrop-blur-sm p-10 rounded-2xl">
+              <h4 className="text-2xl font-bold mb-4">Para Investidores</h4>
+              <p className="text-lg">Retorno previsível, risco monitorado em tempo real.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* How it Works Section - Black Background */}
+      <section className="bg-black text-white py-20 px-8">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 text-orange-400">
+            Como Funciona
+          </h2>
+          
+          <div className="grid md:grid-cols-2 gap-16">
+            {/* For Founders */}
+            <div>
+              <h3 className="text-3xl font-bold mb-8 text-orange-400">🔹 Para Founders:</h3>
+              <div className="space-y-8">
+                <div className="flex gap-6 items-start">
+                  <div className="w-12 h-12 bg-orange-600 rounded-full flex items-center justify-center text-xl font-bold flex-shrink-0">1</div>
+                  <div>
+                    <h4 className="text-xl font-semibold mb-2">Conecte seus dados</h4>
+                    <p className="text-gray-300">(billing, contabilidade).</p>
+                  </div>
+                </div>
+                <div className="flex gap-6 items-start">
+                  <div className="w-12 h-12 bg-orange-600 rounded-full flex items-center justify-center text-xl font-bold flex-shrink-0">2</div>
+                  <div>
+                    <h4 className="text-xl font-semibold mb-2">Receba proposta de crédito</h4>
+                    <p className="text-gray-300">baseada no seu MRR/ARR.</p>
+                  </div>
+                </div>
+                <div className="flex gap-6 items-start">
+                  <div className="w-12 h-12 bg-orange-600 rounded-full flex items-center justify-center text-xl font-bold flex-shrink-0">3</div>
+                  <div>
+                    <h4 className="text-xl font-semibold mb-2">Pague conforme sua receita cresce</h4>
+                    <p className="text-gray-300">Sem perder equity, sem burocracia de banco.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* For Investors */}
+            <div>
+              <h3 className="text-3xl font-bold mb-8 text-orange-400">🔹 Para Investidores:</h3>
+              <div className="space-y-8">
+                <div className="flex gap-6 items-start">
+                  <div className="w-12 h-12 bg-orange-600 rounded-full flex items-center justify-center text-xl font-bold flex-shrink-0">1</div>
+                  <div>
+                    <h4 className="text-xl font-semibold mb-2">Cadastre-se e passe pela aprovação KYC</h4>
+                    <p className="text-gray-300">Processo seguro e regulamentado.</p>
+                  </div>
+                </div>
+                <div className="flex gap-6 items-start">
+                  <div className="w-12 h-12 bg-orange-600 rounded-full flex items-center justify-center text-xl font-bold flex-shrink-0">2</div>
+                  <div>
+                    <h4 className="text-xl font-semibold mb-2">Selecione operações SaaS disponíveis</h4>
+                    <p className="text-gray-300">Análise completa de cada oportunidade.</p>
+                  </div>
+                </div>
+                <div className="flex gap-6 items-start">
+                  <div className="w-12 h-12 bg-orange-600 rounded-full flex items-center justify-center text-xl font-bold flex-shrink-0">3</div>
+                  <div>
+                    <h4 className="text-xl font-semibold mb-2">Acompanhe e receba</h4>
+                    <p className="text-gray-300">Pagamentos mensais indexados ao MRR, direto na sua conta.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* RBF Explanation Section - Orange Background */}
+      <section className="bg-gradient-to-br from-orange-600 to-orange-700 text-white py-20 px-8">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-4xl md:text-5xl font-bold mb-12">
+            O que é Revenue-Based Financing (RBF)?
+          </h2>
+          
+          <div className="bg-white/10 backdrop-blur-sm p-12 rounded-2xl">
+            <p className="text-xl leading-relaxed">
+              "É um modelo de dívida onde a parcela é um percentual da sua receita mensal. 
+              Diferente de equity (sem venda de participação) e diferente de empréstimos fixos 
+              (sem parcelas engessadas). O contrato tem um múltiplo de retorno pré-definido: 
+              quando ele é atingido, a dívida é encerrada."
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Security & Technology Section - Black Background */}
+      <section className="bg-black text-white py-20 px-8">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 text-orange-400">
+            Segurança e Tecnologia
+          </h2>
+          
+          <div className="grid md:grid-cols-2 gap-8">
+            <div className="bg-gray-900 p-8 rounded-2xl border border-gray-800">
+              <div className="flex items-center gap-4 mb-6">
+                <BarChart3 className="w-12 h-12 text-orange-500" />
+                <h3 className="text-xl font-bold">Streaming de métricas</h3>
+              </div>
+              <p className="text-gray-300">Monitoramento via APIs de billing, usage e contabilidade.</p>
+            </div>
+            
+            <div className="bg-gray-900 p-8 rounded-2xl border border-gray-800">
+              <div className="flex items-center gap-4 mb-6">
+                <Brain className="w-12 h-12 text-orange-500" />
+                <h3 className="text-xl font-bold">Machine Learning de risco</h3>
+              </div>
+              <p className="text-gray-300">Antecipamos sinais de churn antes que virem inadimplência.</p>
+            </div>
+            
+            <div className="bg-gray-900 p-8 rounded-2xl border border-gray-800">
+              <div className="flex items-center gap-4 mb-6">
+                <CheckCircle className="w-12 h-12 text-orange-500" />
+                <h3 className="text-xl font-bold">Compliance regulatório</h3>
+              </div>
+              <p className="text-gray-300">Estrutura legal de mútuo auditável, com logging transacional (Postgres/ACID).</p>
+            </div>
+            
+            <div className="bg-gray-900 p-8 rounded-2xl border border-gray-800">
+              <div className="flex items-center gap-4 mb-6">
+                <Lock className="w-12 h-12 text-orange-500" />
+                <h3 className="text-xl font-bold">Risco transparente</h3>
+              </div>
+              <p className="text-gray-300">Os investidores acompanham ARR, churn e métricas em tempo real.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Target Audience Section - Orange Background */}
+      <section className="bg-gradient-to-br from-orange-600 to-orange-700 text-white py-20 px-8">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16">
+            Público-Alvo
+          </h2>
+          
+          <div className="grid md:grid-cols-2 gap-12">
+            <div className="bg-white/10 backdrop-blur-sm p-12 rounded-2xl text-center">
+              <Rocket className="w-20 h-20 mx-auto mb-8 text-white" />
+              <h3 className="text-2xl font-bold mb-6">SaaS em Série A/B</h3>
+              <p className="text-lg leading-relaxed">
+                Startups com MRR validado, métricas sólidas, em busca de capital escalável e não dilutivo.
+              </p>
+            </div>
+            
+            <div className="bg-white/10 backdrop-blur-sm p-12 rounded-2xl text-center">
+              <Target className="w-20 h-20 mx-auto mb-8 text-white" />
+              <h3 className="text-2xl font-bold mb-6">Investidores Qualificados</h3>
+              <p className="text-lg leading-relaxed">
+                Profissionais e family offices que buscam retorno acima da renda fixa, 
+                mas com risco controlado por métricas operacionais de SaaS.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA Section - Black Background */}
+      <section className="bg-black text-white py-20 px-8">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-4xl md:text-5xl font-bold mb-6 text-orange-400">
+            Conectamos o capital ao crescimento do SaaS.
+          </h2>
+          
+          <p className="text-2xl mb-12 text-gray-300">
+            Junte-se ao futuro do financiamento:
+          </p>
+          
+          <div className="space-y-6 mb-12">
+            <p className="text-xl flex items-center justify-center gap-3">
+              🚀 Se você é Founder → escale sem vender equity.
+            </p>
+            <p className="text-xl flex items-center justify-center gap-3">
+              💸 Se você é Investidor → acesse um novo ativo rentável, monitorado em tempo real.
+            </p>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row gap-6 justify-center">
             <Button 
-              onClick={() => router.push('/cadastro')}
+              onClick={() => router.push('/founder')}
               size="lg"
-              className="px-8 py-3 text-lg"
+              className="px-12 py-4 text-xl bg-orange-600 hover:bg-orange-700 text-white border-none"
             >
-              Começar a Investir →
+              Sou Founder de SaaS
             </Button>
             
             <Button 
-              onClick={() => router.push('/login')}
+              onClick={() => router.push('/investor')}
               variant="outline"
               size="lg" 
-              className="px-8 py-3 text-lg"
+              className="px-12 py-4 text-xl border-orange-500 text-orange-400 hover:bg-orange-500 hover:text-white"
             >
-              Já tenho conta
+              Sou Investidor
             </Button>
           </div>
-        </div>
-
-        {/* Stats */}
-        <div className="flex flex-wrap justify-center gap-16 mb-16">
-          <div className="text-center">
-            <div className="text-4xl font-bold text-primary mb-2">12-18%</div>
-            <p className="text-muted-foreground">Retorno anual esperado</p>
-          </div>
-          <div className="text-center">
-            <div className="text-4xl font-bold text-primary mb-2">50+</div>
-            <p className="text-muted-foreground">Empresas SaaS avaliadas</p>
-          </div>
-          <div className="text-center">
-            <div className="text-4xl font-bold text-primary mb-2">R$ 1k</div>
-            <p className="text-muted-foreground">Investimento mínimo</p>
-          </div>
-        </div>
-
-        {/* Features */}
-        <div className="max-w-4xl mx-auto mb-16 space-y-8">
-          <div className="flex items-start gap-6 p-6">
-            <TrendingUp className="w-16 h-16 text-primary flex-shrink-0" />
-            <div>
-              <h3 className="text-2xl font-bold text-foreground mb-3">Venture Debt para SaaS</h3>
-              <p className="text-lg text-muted-foreground">
-                Empresas de software pagam uma porcentagem do MRR mensalmente. 
-                Crescimento = mais retorno para você.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-6 p-6">
-            <Shield className="w-16 h-16 text-primary flex-shrink-0" />
-            <div>
-              <h3 className="text-2xl font-bold text-foreground mb-3">Diversificação Automática</h3>
-              <p className="text-lg text-muted-foreground">
-                Seu capital é distribuído entre várias empresas com diferentes 
-                perfis de risco e crescimento.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-6 p-6">
-            <DollarSign className="w-16 h-16 text-primary flex-shrink-0" />
-            <div>
-              <h3 className="text-2xl font-bold text-foreground mb-3">Pagamentos Mensais</h3>
-              <p className="text-lg text-muted-foreground">
-                Receba retornos mensalmente conforme as empresas crescem. 
-                Liquidez flexível baseada na performance.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* How it Works */}
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold mb-16 text-foreground">Como Funciona</h2>
           
-          <div className="max-w-5xl mx-auto space-y-12">
-            <div className="flex items-center gap-8">
-              <div className="w-20 h-20 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-3xl font-bold flex-shrink-0">
-                1
-              </div>
-              <div className="text-left">
-                <h3 className="text-2xl font-semibold mb-3 text-foreground">Cadastre-se</h3>
-                <p className="text-lg text-muted-foreground">
-                  Processo 100% digital em menos de 5 minutos. 
-                  Validação automática dos seus documentos.
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-8 flex-row-reverse">
-              <div className="w-20 h-20 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-3xl font-bold flex-shrink-0">
-                2
-              </div>
-              <div className="text-left">
-                <h3 className="text-2xl font-semibold mb-3 text-foreground">Invista</h3>
-                <p className="text-lg text-muted-foreground">
-                  Escolha entre Carteira IA (automática) ou Credit Picking (manual). 
-                  Seu capital é distribuído entre empresas SaaS.
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-8">
-              <div className="w-20 h-20 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-3xl font-bold flex-shrink-0">
-                3
-              </div>
-              <div className="text-left">
-                <h3 className="text-2xl font-semibold mb-3 text-foreground">Receba</h3>
-                <p className="text-lg text-muted-foreground">
-                  Acompanhe o crescimento das empresas e receba seus retornos 
-                  mensalmente. Transparência total.
-                </p>
-              </div>
-            </div>
+          {/* Footer */}
+          <div className="text-center mt-16 text-gray-500">
+            <p>© 2025 will.lending - O futuro do financiamento SaaS</p>
           </div>
         </div>
-
-        {/* CTA Section */}
-        <div className="bg-card border border-border rounded-lg text-center py-16 px-8">
-          <Users className="w-20 h-20 mx-auto mb-8 text-primary" />
-          <h2 className="text-4xl font-bold mb-6 text-foreground">
-            Pronto para começar a investir no futuro?
-          </h2>
-          <p className="text-xl mb-10 text-muted-foreground max-w-2xl mx-auto">
-            Junte-se aos investidores que já descobriram o Venture Debt para SaaS
-          </p>
-          <Button 
-            onClick={() => router.push('/cadastro')}
-            size="lg"
-            className="px-12 py-4 text-lg"
-          >
-            Criar Conta Grátis →
-          </Button>
-        </div>
-
-        {/* Footer */}
-        <div className="text-center mt-16 text-muted-foreground">
-          <p>© 2025 will.lending - Venture Debt democratizado</p>
-        </div>
-      </div>
+      </section>
     </div>
   );
 }

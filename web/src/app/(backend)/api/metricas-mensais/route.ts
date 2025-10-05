@@ -2,7 +2,6 @@ import { parseCreate, parseUpdate, parseQuery } from '../../schemas/metricas-men
 import { 
   createMetricasMensais, 
   deleteMetricasMensais, 
-  getMetricasMensais, 
   listMetricasMensais, 
   updateMetricasMensais 
 } from '../../services/metricas-mensais';

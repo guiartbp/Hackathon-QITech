@@ -1,5 +1,5 @@
 "use client";
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { SearchBar } from '@/components/marketplace/SearchBar';
@@ -7,8 +7,8 @@ import { FilterButton } from '@/components/marketplace/FilterButton';
 import { PropostaCard } from '@/components/marketplace/PropostaCard';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Filter } from 'lucide-react';
-import { mockPropostas } from '@/lib/mockData';
+import { Filter, Loader2 } from 'lucide-react';
+import { usePropostas, type MarketplaceFilters } from '@/hooks/usePropostas';
 
 export default function Marketplace() {
   const navigate = useRouter();
@@ -17,27 +17,53 @@ export default function Marketplace() {
     adequado: true,
     tier: false,
     producao: false,
+    highProgress: false,
+    lowRisk: false,
   });
+
+  // Build marketplace filters from state
+  const marketplaceFilters: MarketplaceFilters = useMemo(() => {
+    const apiFilters: MarketplaceFilters = {};
+
+    if (searchQuery) {
+      apiFilters.search = searchQuery;
+    }
+
+    if (filters.adequado) {
+      apiFilters.scoreMin = 70; // Score adequado > 70
+    }
+
+    if (filters.tier) {
+      apiFilters.tier = 'A'; // Tier A+B
+    }
+
+    if (filters.producao) {
+      apiFilters.statusFunding = 'ATIVA'; // Status em produção
+    }
+
+    if (filters.highProgress) {
+      apiFilters.progressoFundingMin = 75; // Progresso alto > 75%
+    }
+
+    if (filters.lowRisk) {
+      apiFilters.scoreMin = 85; // Baixo risco > 85 pontos
+    }
+
+    return apiFilters;
+  }, [searchQuery, filters]);
+
+  const { propostas, loading, error } = usePropostas(marketplaceFilters);
 
   const toggleFilter = (key: keyof typeof filters) => {
     setFilters(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
   const clearFilters = () => {
-    setFilters({ adequado: false, tier: false, producao: false });
+    setFilters({ adequado: false, tier: false, producao: false, highProgress: false, lowRisk: false });
     setSearchQuery('');
   };
 
   const hasActiveFilters = Object.values(filters).some(v => v) || searchQuery;
-
-  const filteredPropostas = mockPropostas.filter(proposta => {
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      return proposta.nome.toLowerCase().includes(query) || 
-             proposta.scoreLabel.toLowerCase().includes(query);
-    }
-    return true;
-  });
 
   return (
     <DashboardLayout>
@@ -73,10 +99,22 @@ export default function Marketplace() {
                 onToggle={() => toggleFilter('tier')}
               />
               
-              <FilterButton 
-                label="Produção" 
+              <FilterButton
+                label="Produção"
                 active={filters.producao}
                 onToggle={() => toggleFilter('producao')}
+              />
+
+              <FilterButton
+                label="Alto Funding"
+                active={filters.highProgress}
+                onToggle={() => toggleFilter('highProgress')}
+              />
+
+              <FilterButton
+                label="Baixo Risco"
+                active={filters.lowRisk}
+                onToggle={() => toggleFilter('lowRisk')}
               />
               
               {hasActiveFilters && (
@@ -92,19 +130,46 @@ export default function Marketplace() {
             </div>
           </Card>
           
+          {/* Loading State */}
+          {loading && (
+            <div className="text-center py-16">
+              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
+              <h3 className="text-xl font-semibold mb-2">Carregando propostas...</h3>
+              <p className="text-muted-foreground">
+                Buscando as melhores oportunidades para você
+              </p>
+            </div>
+          )}
+
+          {/* Error State */}
+          {error && !loading && (
+            <div className="text-center py-16">
+              <div className="text-6xl mb-4">⚠️</div>
+              <h3 className="text-xl font-semibold mb-2">Erro ao carregar propostas</h3>
+              <p className="text-muted-foreground mb-4">
+                {error}
+              </p>
+              <Button onClick={() => window.location.reload()}>
+                Tentar novamente
+              </Button>
+            </div>
+          )}
+
           {/* Grid of Proposals */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredPropostas.map(proposta => (
-              <PropostaCard
-                key={proposta.id}
-                proposta={proposta}
-                onClick={() => navigate.push(`/propostadetalhes/${proposta.id}`)}
-              />
-            ))}
-          </div>
-          
+          {!loading && !error && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {propostas.map(proposta => (
+                <PropostaCard
+                  key={proposta.id}
+                  proposta={proposta}
+                  onClick={() => navigate.push(`/in/propostas/${proposta.id}`)}
+                />
+              ))}
+            </div>
+          )}
+
           {/* Empty State */}
-          {filteredPropostas.length === 0 && (
+          {!loading && !error && propostas.length === 0 && (
             <div className="text-center py-16">
               <div className="text-6xl mb-4">🔍</div>
               <h3 className="text-xl font-semibold mb-2">Nenhuma proposta encontrada</h3>

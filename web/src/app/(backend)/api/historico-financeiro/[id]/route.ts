@@ -1,4 +1,4 @@
-import { parseUpdate, parseQuery } from '../../../schemas/historico-financeiro';
+import { parseUpdate } from '../../../schemas/historico-financeiro';
 import { 
   deleteHistoricoFinanceiro, 
   getHistoricoFinanceiro, 

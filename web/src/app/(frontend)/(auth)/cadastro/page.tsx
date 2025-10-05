@@ -1,23 +1,38 @@
 "use client";
 
-import { useRouter } from 'next/navigation';
-import { Card, CardContent} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { CheckCircle2, Clock, Shield, TrendingUp } from 'lucide-react';
+import CadastroForm from './CadastroForm';
+import Image from 'next/image';
 
-export default function CadastroHomePage() {
-  const router = useRouter();
-
+export default function CadastroPage() {
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-8">
-      <div className="w-full max-w-4xl">
-        {/* Header outside the box */}
-        <div className="text-center mb-8">
-          <div className="w-20 h-20 mx-auto mb-6 bg-primary rounded-full flex items-center justify-center">
-            <TrendingUp className="w-10 h-10 text-primary-foreground" />
+    <div className="min-h-screen bg-black">
+      <div className="grid lg:grid-cols-[2fr_3fr] min-h-screen">
+        {/* Left side - Form */}
+        <div className="flex items-center justify-center px-8 py-16 bg-black">
+          <div className="w-full max-w-lg">
+            <CadastroForm />
           </div>
-          <h1 className="text-4xl font-bold text-foreground mb-4">
-            Bem-vindo ao futuro do investimento em SaaS 🚀
+        </div>
+        
+        {/* Right side - Image placeholder */}
+        <div className="flex items-center justify-center bg-gradient-to-br from-orange-600 to-orange-700 text-white p-16">
+          <div className="text-center space-y-8">
+            <h2 className="text-4xl md:text-6xl font-bold leading-tight">
+              Crie sua conta W1
+            </h2>
+            <p className="text-xl md:text-2xl leading-relaxed max-w-md mx-auto">
+              Comece a transformar seu planejamento patrimonial hoje
+            </p>
+            <div className="w-32 h-32 mx-auto bg-white/20 rounded-full flex items-center justify-center">
+              <div className="text-6xl">🚀</div>
+            </div>
+            <p className="text-lg text-orange-100 max-w-md mx-auto">
+              Sinta a sensação de <span className="text-cyan-300 font-semibold">transformar cada um dos seus objetivos em conquistas</span>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
           </h1>
           <p className="text-xl text-muted-foreground">
             Invista em empresas SaaS selecionadas e ganhe com o crescimento delas

@@ -544,3 +544,56 @@ model Verification {
 
   @@map("verification")
 }
+
+model Wallet {
+  id                      String               @id @default(uuid())
+  uidUsuario              String               @unique @map("uid_usuario")
+  saldoAtual              Decimal              @default(0) @map("saldo_atual") @db.Decimal(15, 2)
+  disponivelSaque         Decimal              @default(0) @map("disponivel_saque") @db.Decimal(15, 2)
+  valorBloqueado          Decimal              @default(0) @map("valor_bloqueado") @db.Decimal(15, 2)
+  criadoEm                DateTime             @default(now()) @map("criado_em")
+  atualizadoEm            DateTime             @default(now()) @updatedAt @map("atualizado_em")
+  
+  transacoes              WalletTransaction[]
+  
+  @@index([uidUsuario])
+  @@map("carteiras")
+}
+
+model WalletTransaction {
+  id          String                    @id @default(uuid())
+  carteiraId  String                    @map("carteira_id")
+  uidUsuario  String                    @map("uid_usuario")
+  tipo        WalletTransactionType
+  valor       Decimal                   @db.Decimal(15, 2)
+  descricao   String
+  status      WalletTransactionStatus   @default(PENDING)
+  referencia  String?                   // PIX transaction ID or external reference
+  metadata    Json?                     // Additional transaction data
+  criadoEm    DateTime                  @default(now()) @map("criado_em")
+  processadoEm DateTime?                @map("processado_em")
+  
+  carteira Wallet @relation(fields: [carteiraId], references: [id], onDelete: Cascade)
+  
+  @@index([uidUsuario])
+  @@index([carteiraId])
+  @@index([status])
+  @@index([tipo])
+  @@map("transacoes_carteira")
+}
+
+enum WalletTransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  INVESTMENT
+  RETURN
+  PIX_DEPOSIT
+  PIX_WITHDRAWAL
+}
+
+enum WalletTransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
+}

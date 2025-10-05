@@ -8,12 +8,12 @@ function json(data: any, init: ResponseInit = {}) {
   });
 }
 
-export async function GET(req: Request, { params }: { params: { empresaId: string } }) {
+export async function GET(req: Request, { params }: { params: { id: string } }) {
   try {
-    const { empresaId } = params;
+    const { id } = params;
     const { periodo, tipo_relatorio, skip, take } = parseQuery(req.url);
 
-    const result = await getHistoricoFinanceiroPorEmpresa(empresaId, {
+    const result = await getHistoricoFinanceiroPorEmpresa(id, {
       periodo,
       tipo_relatorio,
       skip,
