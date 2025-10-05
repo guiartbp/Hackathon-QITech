@@ -15,7 +15,8 @@ export async function GET(
   req: Request,
   { params }: { params: { id: string } }
 ) {
-  const historico = await HistoricoFinanceiroService.buscarPorId(params.id);
+  const { id } = await params;
+  const historico = await HistoricoFinanceiroService.buscarPorId(id);
   if (!historico) {
     return Response.json({ erro: "Histórico financeiro não encontrado" }, { status: 404 });
   }
@@ -27,9 +28,10 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
+    const { id } = await params;
     const body = await req.json();
     const dados = HistoricoFinanceiroSchema.parse(body);
-    const atualizado = await HistoricoFinanceiroService.atualizar(params.id, dados);
+    const atualizado = await HistoricoFinanceiroService.atualizar(id, dados);
     return Response.json(atualizado);
   } catch (err: unknown) {
     const status = err instanceof ZodError ? 422 : 400;
@@ -42,7 +44,8 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    await HistoricoFinanceiroService.remover(params.id);
+    const { id } = await params;
+    await HistoricoFinanceiroService.remover(id);
     return new Response(null, { status: 204 });
   } catch (err: unknown) {
     return Response.json({ erro: getErrorMessage(err) }, { status: 400 });

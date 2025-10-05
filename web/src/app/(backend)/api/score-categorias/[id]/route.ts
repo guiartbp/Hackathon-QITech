@@ -15,7 +15,8 @@ export async function GET(
   req: Request,
   { params }: { params: { id: string } }
 ) {
-  const scoreCategoria = await ScoreCategoriaService.buscarPorId(params.id);
+  const { id } = await params;
+  const scoreCategoria = await ScoreCategoriaService.buscarPorId(id);
   if (!scoreCategoria) {
     return Response.json({ erro: "Score categoria não encontrada" }, { status: 404 });
   }
@@ -27,9 +28,10 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
+    const { id } = await params;
     const body = await req.json();
     const dados = ScoreCategoriaSchema.parse(body);
-    const atualizado = await ScoreCategoriaService.atualizar(params.id, dados);
+    const atualizado = await ScoreCategoriaService.atualizar(id, dados);
     return Response.json(atualizado);
   } catch (err: unknown) {
     const status = err instanceof ZodError ? 422 : 400;
@@ -42,7 +44,8 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    await ScoreCategoriaService.remover(params.id);
+    const { id } = await params;
+    await ScoreCategoriaService.remover(id);
     return Response.json({ sucesso: true });
   } catch (err: unknown) {
     return Response.json({ erro: getErrorMessage(err) }, { status: 400 });

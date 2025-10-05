@@ -16,7 +16,8 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const empresa = await EmpresaService.buscarPorId(params.id);
+    const { id } = await params;
+    const empresa = await EmpresaService.buscarPorId(id);
     if (!empresa) {
       return Response.json({ erro: "Empresa não encontrada" }, { status: 404 });
     }
@@ -31,9 +32,10 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
+    const { id } = await params;
     const body = await req.json();
     const dados = EmpresaSchema.partial().parse(body);
-    const atualizado = await EmpresaService.atualizar(params.id, dados);
+    const atualizado = await EmpresaService.atualizar(id, dados);
     return Response.json(atualizado);
   } catch (err: unknown) {
     const status = err instanceof ZodError ? 422 : 400;
@@ -46,7 +48,8 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    await EmpresaService.remover(params.id);
+    const { id } = await params;
+    await EmpresaService.remover(id);
     return Response.json({ sucesso: true }, { status: 200 });
   } catch (err: unknown) {
     return Response.json({ erro: getErrorMessage(err) }, { status: 400 });

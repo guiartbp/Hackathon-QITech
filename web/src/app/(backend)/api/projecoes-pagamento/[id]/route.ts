@@ -15,7 +15,8 @@ export async function GET(
   req: Request,
   { params }: { params: { id: string } }
 ) {
-  const projecaoPagamento = await ProjecaoPagamentoService.buscarPorId(params.id);
+  const { id } = await params;
+  const projecaoPagamento = await ProjecaoPagamentoService.buscarPorId(id);
   if (!projecaoPagamento) {
     return Response.json({ erro: "Projeção de pagamento não encontrada" }, { status: 404 });
   }
@@ -27,9 +28,10 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
+    const { id } = await params;
     const body = await req.json();
     const dados = ProjecaoPagamentoSchema.parse(body);
-    const atualizado = await ProjecaoPagamentoService.atualizar(params.id, dados);
+    const atualizado = await ProjecaoPagamentoService.atualizar(id, dados);
     return Response.json(atualizado);
   } catch (err: unknown) {
     const status = err instanceof ZodError ? 422 : 400;
@@ -42,7 +44,8 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    await ProjecaoPagamentoService.remover(params.id);
+    const { id } = await params;
+    await ProjecaoPagamentoService.remover(id);
     return Response.json({ sucesso: true });
   } catch (err: unknown) {
     return Response.json({ erro: getErrorMessage(err) }, { status: 400 });

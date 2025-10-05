@@ -15,7 +15,8 @@ export async function GET(
   req: Request,
   { params }: { params: { id: string } }
 ) {
-  const mrrPlano = await MrrPorPlanoService.buscarPorId(params.id);
+  const { id } = await params;
+  const mrrPlano = await MrrPorPlanoService.buscarPorId(id);
   if (!mrrPlano) {
     return Response.json({ erro: "MRR por plano não encontrado" }, { status: 404 });
   }
@@ -27,9 +28,10 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
+    const { id } = await params;
     const body = await req.json();
     const dados = MrrPorPlanoSchema.parse(body);
-    const atualizado = await MrrPorPlanoService.atualizar(params.id, dados);
+    const atualizado = await MrrPorPlanoService.atualizar(id, dados);
     return Response.json(atualizado);
   } catch (err: unknown) {
     const status = err instanceof ZodError ? 422 : 400;
@@ -42,7 +44,8 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    await MrrPorPlanoService.remover(params.id);
+    const { id } = await params;
+    await MrrPorPlanoService.remover(id);
     return new Response(null, { status: 204 });
   } catch (err: unknown) {
     return Response.json({ erro: getErrorMessage(err) }, { status: 400 });

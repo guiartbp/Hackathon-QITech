@@ -15,7 +15,8 @@ export async function GET(
   req: Request,
   { params }: { params: { id: string } }
 ) {
-  const repasse = await RepasseService.buscarPorId(params.id);
+  const { id } = await params;
+  const repasse = await RepasseService.buscarPorId(id);
   if (!repasse) {
     return Response.json({ erro: "Repasse não encontrado" }, { status: 404 });
   }
@@ -27,9 +28,10 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
+    const { id } = await params;
     const body = await req.json();
     const dados = RepasseSchema.parse(body);
-    const atualizado = await RepasseService.atualizar(params.id, dados);
+    const atualizado = await RepasseService.atualizar(id, dados);
     return Response.json(atualizado);
   } catch (err: unknown) {
     const status = err instanceof ZodError ? 422 : 400;
@@ -42,7 +44,8 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    await RepasseService.remover(params.id);
+    const { id } = await params;
+    await RepasseService.remover(id);
     return Response.json({ sucesso: true });
   } catch (err: unknown) {
     return Response.json({ erro: getErrorMessage(err) }, { status: 400 });

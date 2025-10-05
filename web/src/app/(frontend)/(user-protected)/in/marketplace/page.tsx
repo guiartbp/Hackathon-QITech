@@ -14,7 +14,7 @@ export default function Marketplace() {
   const navigate = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState({
-    adequado: true,
+    adequado: false,
     tier: false,
     producao: false,
     highProgress: false,
@@ -29,9 +29,7 @@ export default function Marketplace() {
       apiFilters.search = searchQuery;
     }
 
-    if (filters.adequado) {
-      apiFilters.scoreMin = 70; // Score adequado > 70
-    }
+    // Score filter removed - show all scores
 
     if (filters.tier) {
       apiFilters.tier = 'A'; // Tier A+B
