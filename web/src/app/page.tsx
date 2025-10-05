@@ -107,9 +107,9 @@ export default function HomePage() {
                 <h3 className="text-2xl font-bold">Para SaaS</h3>
               </div>
               <p className="text-lg text-gray-300 leading-relaxed">
-                "Você construiu um produto incrível, tem receita recorrente previsível e está crescendo rápido. 
+                &#34;Você construiu um produto incrível, tem receita recorrente previsível e está crescendo rápido. 
                 Mas para escalar precisa de marketing, contratações e comunidade. O problema? Bancos não entendem 
-                SaaS e o Venture Capital cobra caro em diluição."
+                SaaS e o Venture Capital cobra caro em diluição.&#34;
               </p>
             </div>
             
@@ -120,9 +120,9 @@ export default function HomePage() {
                 <h3 className="text-2xl font-bold">Para Investidores</h3>
               </div>
               <p className="text-lg text-gray-300 leading-relaxed">
-                "No outro lado, investidores em busca de ativos rentáveis sofrem com juros baixos em produtos 
+                &#34;No outro lado, investidores em busca de ativos rentáveis sofrem com juros baixos em produtos 
                 tradicionais e alta volatilidade em equity. O Venture Debt baseado em receita oferece retornos 
-                elevados, atrelados à performance de empresas de software com contratos recorrentes."
+                elevados, atrelados à performance de empresas de software com contratos recorrentes.&#34;
               </p>
             </div>
           </div>
@@ -247,10 +247,10 @@ export default function HomePage() {
           
           <div className="bg-white/10 backdrop-blur-sm p-12 rounded-2xl">
             <p className="text-xl leading-relaxed">
-              "É um modelo de dívida onde a parcela é um percentual da sua receita mensal. 
+              &#34;É um modelo de dívida onde a parcela é um percentual da sua receita mensal. 
               Diferente de equity (sem venda de participação) e diferente de empréstimos fixos 
               (sem parcelas engessadas). O contrato tem um múltiplo de retorno pré-definido: 
-              quando ele é atingido, a dívida é encerrada."
+              quando ele é atingido, a dívida é encerrada.&#34;
             </p>
           </div>
         </div>

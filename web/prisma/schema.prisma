@@ -8,73 +8,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id            String    @id @default(uuid()) @map("_id")
-  name          String
-  email         String
-  emailVerified Boolean
-  image         String?
-  createdAt     DateTime
-  updatedAt     DateTime
-  sessions      Session[]
-  accounts      Account[]
-  role          Role      @default(TOMADOR)
-
-  @@unique([email])
-  @@map("user")
-}
-
-enum Role {
-  ADMIN
-  TOMADOR
-  INVESTIDOR
-}
-
-model Session {
-  id        String   @id @map("_id")
-  expiresAt DateTime
-  token     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  ipAddress String?
-  userAgent String?
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([token])
-  @@map("session")
-}
-
-model Account {
-  id                    String    @id @map("_id")
-  accountId             String
-  providerId            String
-  userId                String
-  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  accessToken           String?
-  refreshToken          String?
-  idToken               String?
-  accessTokenExpiresAt  DateTime?
-  refreshTokenExpiresAt DateTime?
-  scope                 String?
-  password              String?
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
-
-  @@map("account")
-}
-
-model Verification {
-  id         String   @id @map("_id")
-  identifier String
-  value      String
-  expiresAt  DateTime
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @default(now()) @updatedAt
-
-  @@map("verification")
-}
-
 model Investidor {
   id                     String         @id @default(uuid())
   uidUsuario             String         @unique @map("uid_usuario")
@@ -548,36 +481,101 @@ model AuditLog {
   @@map("audit_log")
 }
 
+/**
+ * ============= Better auth =============
+ */
+
+model User {
+  id            String    @id @map("_id")
+  name          String
+  email         String
+  emailVerified Boolean   @default(false)
+  image         String?
+  userType      String?   @map("user_type") // "investor" or "founder"
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @default(now()) @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+
+  @@unique([email])
+  @@map("user")
+}
+
+model Session {
+  id        String   @id @map("_id")
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id @map("_id")
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id @map("_id")
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+
+  @@map("verification")
+}
+
 model Wallet {
-  id              String   @id @default(uuid())
-  uidUsuario      String   @unique @map("uid_usuario")
-  saldoAtual      Decimal  @default(0) @map("saldo_atual") @db.Decimal(15, 2)
-  disponivelSaque Decimal  @default(0) @map("disponivel_saque") @db.Decimal(15, 2)
-  valorBloqueado  Decimal  @default(0) @map("valor_bloqueado") @db.Decimal(15, 2)
-  criadoEm        DateTime @default(now()) @map("criado_em")
-  atualizadoEm    DateTime @default(now()) @updatedAt @map("atualizado_em")
-
-  transacoes WalletTransaction[]
-
+  id                      String               @id @default(uuid())
+  uidUsuario              String               @unique @map("uid_usuario")
+  saldoAtual              Decimal              @default(0) @map("saldo_atual") @db.Decimal(15, 2)
+  disponivelSaque         Decimal              @default(0) @map("disponivel_saque") @db.Decimal(15, 2)
+  valorBloqueado          Decimal              @default(0) @map("valor_bloqueado") @db.Decimal(15, 2)
+  criadoEm                DateTime             @default(now()) @map("criado_em")
+  atualizadoEm            DateTime             @default(now()) @updatedAt @map("atualizado_em")
+  
+  transacoes              WalletTransaction[]
+  
   @@index([uidUsuario])
   @@map("carteiras")
 }
 
 model WalletTransaction {
-  id           String                  @id @default(uuid())
-  carteiraId   String                  @map("carteira_id")
-  uidUsuario   String                  @map("uid_usuario")
-  tipo         WalletTransactionType
-  valor        Decimal                 @db.Decimal(15, 2)
-  descricao    String
-  status       WalletTransactionStatus @default(PENDING)
-  referencia   String? // PIX transaction ID or external reference
-  metadata     Json? // Additional transaction data
-  criadoEm     DateTime                @default(now()) @map("criado_em")
-  processadoEm DateTime?               @map("processado_em")
-
+  id          String                    @id @default(uuid())
+  carteiraId  String                    @map("carteira_id")
+  uidUsuario  String                    @map("uid_usuario")
+  tipo        WalletTransactionType
+  valor       Decimal                   @db.Decimal(15, 2)
+  descricao   String
+  status      WalletTransactionStatus   @default(PENDING)
+  referencia  String?                   // PIX transaction ID or external reference
+  metadata    Json?                     // Additional transaction data
+  criadoEm    DateTime                  @default(now()) @map("criado_em")
+  processadoEm DateTime?                @map("processado_em")
+  
   carteira Wallet @relation(fields: [carteiraId], references: [id], onDelete: Cascade)
-
+  
   @@index([uidUsuario])
   @@index([carteiraId])
   @@index([status])

@@ -330,7 +330,7 @@ export default function PortfolioEvolucao() {
                   <TableRow 
                     key={ativo.id}
                     className="cursor-pointer hover:bg-primary-light/10 transition-colors"
-                    onClick={() => navigate.push(`/in/contrato/${ativo.id}`)}
+                    onClick={() => navigate.push(`/in/contratos/${ativo.id}`)}
                   >
                     <TableCell>
                       <div className="flex items-center gap-3">

@@ -235,7 +235,7 @@ export default function MinhasDividas() {
                     <Card 
                       key={contrato.id}
                       className="hover:shadow-lg transition-all cursor-pointer hover:border-primary/50"
-                      onClick={() => navigate.push(`/to/contrato/${contrato.id}`)}
+                      onClick={() => navigate.push(`/to/contratos/${contrato.id}`)}
                     >
                       <CardHeader className="pb-4">
                         <div className="flex justify-between items-start">

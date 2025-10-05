@@ -31,11 +31,14 @@ function LoginForm() {
       const result = await authClient.signIn.email({
         email,
         password,
-        callbackURL: "/kdsajnfljkadshfjkladshjfkladshjlfhasl",
+        callbackURL: "/",
       });
 
       if (result.error) {
         toast.error((result.error?.message || 'Erro desconhecido'))
+      } else {
+        // Success! User logged in and will be redirected
+        toast.success('Login realizado com sucesso!');
       }
     } catch (error) {
       toast.error('Erro: ' + String(error))

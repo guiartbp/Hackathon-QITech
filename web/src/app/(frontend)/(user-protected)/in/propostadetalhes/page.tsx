@@ -14,7 +14,6 @@ import { Separator } from '@/components/ui/separator';
 import { MetricCard } from '@/components/detalhes/MetricCard';
 import { InfoRow } from '@/components/detalhes/InfoRow';
 import { MetricRow } from '@/components/detalhes/MetricRow';
-import { LineChartComponent } from '@/components/detalhes/LineChartComponent';
 import { formatCurrency, formatDate } from '@/lib/format';
 import { ArrowLeft, ExternalLink, Minus, Plus, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -237,7 +236,7 @@ export default function PropostaDetalhes() {
                   {/* Contract Terms */}
                   <div>
                     <h3 className="font-semibold mb-4">Termos da Proposta</h3>
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <MetricCard
                         label="Valor solicitado"
                         value={formatCurrency(proposta.valorSolicitado)}
@@ -247,6 +246,11 @@ export default function PropostaDetalhes() {
                         label="Múltiplo CAP"
                         value={`${proposta.multiploCap.toFixed(2)}x`}
                         variant="purple"
+                      />
+                      <MetricCard
+                        label="Rendimento"
+                        value={`${rendimentoCalculado.toFixed(1)}%`}
+                        variant="orange"
                       />
                       <MetricCard
                         label="Duração"

@@ -247,7 +247,7 @@ export default function PortfolioPagamentos() {
                           <Button 
                             variant="ghost" 
                             size="sm"
-                            onClick={() => navigate.push(`/in/contrato/${pgto.ativoId}`)}
+                            onClick={() => navigate.push(`/in/contratos/${pgto.ativoId}`)}
                           >
                             👁
                           </Button>
@@ -355,7 +355,7 @@ export default function PortfolioPagamentos() {
                           <Button 
                             variant="ghost" 
                             size="sm"
-                            onClick={() => navigate.push(`/in/contrato/${proj.ativoId}`)}
+                            onClick={() => navigate.push(`/in/contratos/${proj.ativoId}`)}
                           >
                             👁
                           </Button>

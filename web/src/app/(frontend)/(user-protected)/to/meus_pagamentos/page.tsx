@@ -381,7 +381,7 @@ export default function MeusPagamentos() {
                         variant="ghost" 
                         size="sm" 
                         className="w-full"
-                        onClick={() => navigate.push(`/to/contrato/${pagamento.contrato_id}`)}
+                        onClick={() => navigate.push(`/to/contratos/${pagamento.contrato_id}`)}
                       >
                         Ver contrato
                       </Button>
@@ -512,7 +512,7 @@ export default function MeusPagamentos() {
                           <TableRow 
                             key={pagamento.id}
                             className="cursor-pointer hover:bg-muted/50 transition-colors"
-                            onClick={() => navigate.push(`/to/contrato/${pagamento.contrato_id}`)}
+                            onClick={() => navigate.push(`/to/contratos/${pagamento.contrato_id}`)}
                           >
                             <TableCell>
                               <div className="font-medium">
@@ -541,7 +541,7 @@ export default function MeusPagamentos() {
                                 size="sm"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  navigate.push(`/to/contrato/${pagamento.contrato_id}`);
+                                  navigate.push(`/to/contratos/${pagamento.contrato_id}`);
                                 }}
                               >
                                 👁

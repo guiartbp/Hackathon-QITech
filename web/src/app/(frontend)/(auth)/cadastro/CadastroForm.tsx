@@ -46,13 +46,15 @@ function CadastroForm({ isDarkBackground = true, onUserTypeChange }: CadastroFor
         name,
         email,
         password,
+        userType, // Pass userType directly as an additional field
         callbackURL: "/",
-        // Include userType in the signup data
-        ...(userType && { userType }),
       });
 
       if (result.error) {
         toast.error((result.error?.message || 'Erro desconhecido'))
+      } else {
+        // Success! User created and will be redirected
+        toast.success('Cadastro realizado com sucesso!');
       }
     } catch (error) {
       toast.error('Erro: ' + String(error))
