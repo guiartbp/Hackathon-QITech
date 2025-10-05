@@ -1,7 +1,8 @@
-import { parseCreate, parseUpdate, parseQuery } from '../../schemas/tomador';
+import { ZodError } from 'zod';
+import { parseCreate, parseQuery, parseUpdate } from '../../schemas/tomador';
 import { createTomador, deleteTomador, getTomador, listTomadores, updateTomador } from '../../services/tomador';
 
-function json(data: any, init: ResponseInit = {}) {
+function json(data: unknown, init: ResponseInit = {}) {
   return new Response(JSON.stringify(data), {
     ...init,
     headers: { 'content-type': 'application/json; charset=utf-8', ...(init.headers || {}) },
@@ -20,10 +21,13 @@ export async function GET(req: Request) {
 
     const items = await listTomadores({ search, skip, take });
     return json(items);
-  } catch (e: any) {
-    const msg = e?.issues ? e.issues.map((i: any) => `${i.path.join('.')}: ${i.message}`).join(', ') : (e?.message ?? 'Erro ao buscar tomadores');
-    const status = e?.issues ? 400 : 500;
-    return json({ error: msg }, { status });
+  } catch (e: unknown) {
+    if (e instanceof ZodError) {
+      const msg = e.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join(', ');
+      return json({ error: msg }, { status: 400 });
+    }
+    const msg = e instanceof Error ? e.message : 'Erro ao buscar tomadores';
+    return json({ error: msg }, { status: 500 });
   }
 }
 
@@ -33,8 +37,12 @@ export async function POST(req: Request) {
     const data = parseCreate(body);
     const created = await createTomador(data);
     return json(created, { status: 201 });
-  } catch (e: any) {
-    const msg = e?.issues ? e.issues.map((i: any) => `${i.path.join('.')}: ${i.message}`).join(', ') : (e?.message ?? 'Erro ao criar');
+  } catch (e: unknown) {
+    if (e instanceof ZodError) {
+      const msg = e.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join(', ');
+      return json({ error: msg }, { status: 400 });
+    }
+    const msg = e instanceof Error ? e.message : 'Erro ao criar';
     return json({ error: msg }, { status: 400 });
   }
 }
@@ -51,10 +59,13 @@ export async function PATCH(req: Request) {
 
     const updated = await updateTomador({ id, uid_usuario }, data);
     return json(updated);
-  } catch (e: any) {
-    const msg = e?.issues ? e.issues.map((i: any) => `${i.path.join('.')}: ${i.message}`).join(', ') : (e?.message ?? 'Erro ao atualizar tomador');
-    const status = e?.issues ? 400 : e?.code === 'P2025' ? 404 : 500;
-    return json({ error: msg }, { status });
+  } catch (e: unknown) {
+    if (e instanceof ZodError) {
+      const msg = e.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join(', ');
+      return json({ error: msg }, { status: 400 });
+    }
+    const msg = e instanceof Error ? e.message : 'Erro ao atualizar tomador';
+    return json({ error: msg }, { status: 500 });
   }
 }
 
@@ -67,9 +78,13 @@ export async function DELETE(req: Request) {
 
     const deleted = await deleteTomador({ id, uid_usuario });
     return json(deleted);
-  } catch (e: any) {
-    const msg = e?.issues ? e.issues.map((i: any) => `${i.path.join('.')}: ${i.message}`).join(', ') : (e?.message ?? 'Erro ao excluir tomador');
-    const status = e?.issues ? 400 : e?.code === 'P2025' ? 404 : 500;
-    return json({ error: msg }, { status });
+  } catch (e: unknown) {
+    if (e instanceof ZodError) {
+      const msg = e.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join(', ');
+      return json({ error: msg }, { status: 400 });
+    }
+    const msg = e instanceof Error ? e.message : 'Erro ao excluir tomador';
+    return json({ error: msg }, { status: 500 });
   }
 }
+

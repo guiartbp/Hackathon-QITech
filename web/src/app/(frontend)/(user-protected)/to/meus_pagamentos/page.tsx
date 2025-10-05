@@ -449,7 +449,7 @@ export default function MeusPagamentos() {
                         dataKey="valor" 
                         fill="hsl(var(--purple))"
                         radius={[8, 8, 0, 0]}
-                        onClick={(data: any) => setMesSelecionado(data.payload.mes)}
+                        onClick={(data) => setMesSelecionado(data.payload.mes)}
                         cursor="pointer"
                       >
                         {mockHistoricoData.map((entry, index) => (
@@ -491,7 +491,15 @@ export default function MeusPagamentos() {
                       <TableHeader>
                         <TableRow>
                           <TableHead>Contrato</TableHead>
-                          <TableHead>Data</TableHead>
+                          <TableHead>
+                            <Button
+                              variant="ghost"
+                              onClick={() => setOrdenacao(ordenacao === 'asc' ? 'desc' : 'asc')}
+                            >
+                              Data
+                              {ordenacao === 'asc' ? ' ▲' : ' ▼'}
+                            </Button>
+                          </TableHead>
                           <TableHead>Valor</TableHead>
                           <TableHead>MRR Período</TableHead>
                           <TableHead>Taxa</TableHead>
