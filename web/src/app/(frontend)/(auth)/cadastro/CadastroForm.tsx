@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 
 import LoginOptionals from "@/components/auth/LoginOptionals";
+
 import RequiredTag from "@/components/input/RequiredTag";
 import { authClient } from "@/lib/auth-client";
 import toast from "react-hot-toast";
@@ -13,27 +14,31 @@ const GoogleAuthButton = dynamic(() => import('@/components/auth/GoogleLoginButt
 const CredentialsButton = dynamic(() => import('@/components/auth/CredentialsButton'));
 const ValidatedInput = dynamic(() => import('@/components/input/ValidatedInput'));
 
+type UserType = 'investor' | 'founder';
+
 interface CadastroFormProps {
   isDarkBackground?: boolean;
+  onUserTypeChange?: (userType: UserType) => void;
 }
 
-function CadastroForm({ isDarkBackground = true }: CadastroFormProps = {}) {
+function CadastroForm({ isDarkBackground = true, onUserTypeChange }: CadastroFormProps = {}) {
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<'investor' | 'founder' | ''>(''); // nova role
+  const [userType, setUserType] = useState<UserType>('investor');
 
   useEffect(() => {
     setLoading(false);
   }, []);
 
+  const handleUserTypeChange = (newUserType: UserType) => {
+    setUserType(newUserType);
+    onUserTypeChange?.(newUserType);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!role) {
-      toast.error("Selecione seu perfil: Investidor ou Founder.");
-      return;
-    }
     setLoading(true);
 
     try {
@@ -42,16 +47,15 @@ function CadastroForm({ isDarkBackground = true }: CadastroFormProps = {}) {
         email,
         password,
         callbackURL: "/",
-        attributes: {
-          role, // manda a role escolhida
-        },
+        // Include userType in the signup data
+        ...(userType && { userType }),
       });
 
       if (result.error) {
-        toast.error(result.error?.message || 'Erro desconhecido');
+        toast.error((result.error?.message || 'Erro desconhecido'))
       }
     } catch (error) {
-      toast.error('Erro: ' + String(error));
+      toast.error('Erro: ' + String(error))
     } finally {
       setLoading(false);
     }
@@ -59,16 +63,41 @@ function CadastroForm({ isDarkBackground = true }: CadastroFormProps = {}) {
 
   return ( 
     <div className="lg:w-[90%] xl:w-[80%]">
-      <h2 className={`font-bold text-[40px] text-center leading-12 ${isDarkBackground ? 'text-white' : 'text-black'}`}>
-        Cadastro
-      </h2>
+      {/* User Type Toggle */}
+      <div className="mb-8">
+        <div className="flex bg-gray-800 rounded-full p-1 w-fit mx-auto">
+          <button
+            type="button"
+            onClick={() => handleUserTypeChange('investor')}
+            className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+              userType === 'investor'
+                ? 'bg-orange-600 text-white shadow-lg' 
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            Investidor
+          </button>
+          <button
+            type="button"
+            onClick={() => handleUserTypeChange('founder')}
+            className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+              userType === 'founder'
+                ? 'bg-black text-white shadow-lg' 
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            Founder
+          </button>
+        </div>
+      </div>
 
+      <h2 className={`font-bold text-[40px] text-center leading-12 ${isDarkBackground ? 'text-white' : 'text-black'}`}>Cadastro</h2>
       <form className="mt-6" onSubmit={handleSubmit}>
         <ValidatedInput 
           title="Nome"
           placeholder="Pedro Salles"
           name="name"
-          type="text"
+          type="name"
           value={name}
           setValue={setName}
           labelClassName={isDarkBackground ? 'auth-label' : 'auth-label-light'}
@@ -76,7 +105,6 @@ function CadastroForm({ isDarkBackground = true }: CadastroFormProps = {}) {
           iconContainerClassName="auth-icon"
           required
         ><RequiredTag/></ValidatedInput>
-
         <ValidatedInput 
           title="E-mail"
           placeholder="exemplo@email.com.br"
@@ -97,46 +125,17 @@ function CadastroForm({ isDarkBackground = true }: CadastroFormProps = {}) {
           type="password"
           value={password}
           setValue={setPassword}
+
           overrideValidate={(val: string) => val.length >= 6}
+
           containerClassName="mt-4"
           labelClassName={isDarkBackground ? 'auth-label' : 'auth-label-light'}
           inputClassName={isDarkBackground ? 'auth-input' : 'auth-input-light'}
           iconContainerClassName="auth-icon"
           required
-        ><RequiredTag/></ValidatedInput>        
+        ><RequiredTag/></ValidatedInput>        <LoginOptionals />
 
-        {/* Botões Investidor | Founder */}
-        <div className="flex gap-4 mt-6">
-          <button
-            type="button"
-            onClick={() => setRole('investor')}
-            className={`px-4 py-2 rounded-lg border font-medium transition ${
-              role === 'investor' 
-                ? 'bg-orange-500 text-white border-orange-500' 
-                : 'bg-transparent border-gray-400 text-gray-600 hover:bg-gray-100'
-            }`}
-          >
-            Investidor
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setRole('founder')}
-            className={`px-4 py-2 rounded-lg border font-medium transition ${
-              role === 'founder' 
-                ? 'bg-orange-500 text-white border-orange-500' 
-                : 'bg-transparent border-gray-400 text-gray-600 hover:bg-gray-100'
-            }`}
-          >
-            Founder
-          </button>
-        </div>
-
-        <LoginOptionals />
-
-        <CredentialsButton className="mt-6" disabled={loading}>
-          Cadastrar
-        </CredentialsButton>
+        <CredentialsButton className="mt-6" disabled={loading}>Cadastrar</CredentialsButton>
       </form>
       
       <div className="flex items-center gap-4 py-5">
@@ -158,7 +157,7 @@ function CadastroForm({ isDarkBackground = true }: CadastroFormProps = {}) {
         </span>
       </Link>
     </div>
-  );
+   );
 }
 
 export default CadastroForm;

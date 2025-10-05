@@ -46,7 +46,8 @@ function LoginForm() {
 
   return ( 
     <div className="lg:w-[90%] xl:w-[80%]">
-      <h2 className="font-bold text-[40px] text-center leading-12">Continue seu aprendizado</h2>
+      <h1 className="font-bold text-[64px] text-white leading-16">Bem vindo de volta!</h1>
+
       <form className="mt-6" onSubmit={handleSubmit}>
         <ValidatedInput 
           title="E-mail"
@@ -91,9 +92,10 @@ function LoginForm() {
 
       <GoogleAuthButton disabled={loading} text="Entrar com Google" />
 
-      <Link href='/cadastro' className="block w-fit mt-8 text-sm group">Ainda não tem uma conta? <span className="text-pink-500 colorTransition border-b border-transparent group-hover:border-pink-500">Cadastre-se</span></Link>
+      <Link href='/cadastro' className="block w-fit mt-8 text-sm group">Ainda não tem uma conta? <span className="text-orange-500 colorTransition border-b border-transparent group-hover:border-pink-500">Cadastre-se</span></Link>
     </div>
    );
 }
 
 export default LoginForm;
+
