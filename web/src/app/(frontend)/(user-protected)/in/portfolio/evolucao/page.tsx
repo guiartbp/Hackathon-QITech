@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { authClient } from '@/lib/auth-client';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -35,52 +36,143 @@ function MetricCardComponent({ label, value, subtitle, change }: MetricCardProps
 
 export default function PortfolioEvolucao() {
   const navigate = useRouter();
+  const [userName, setUserName] = useState('');
+  const [loading, setLoading] = useState(true);
   const [saldoVisivel, setSaldoVisivel] = useState(true);
   const [tipoAlocacao, setTipoAlocacao] = useState('risco');
   const [periodoHistorico, setPeriodoHistorico] = useState('1ano');
   const [periodoPerformance, setPeriodoPerformance] = useState('1ano');
 
-  const historicoData = [
-    { data: 'Jan/24', valor: 800000 },
-    { data: 'Abr/24', valor: 850000 },
-    { data: 'Jul/24', valor: 950000 },
-    { data: 'Out/24', valor: 1082772.78 }
-  ];
+  // Data states
+  const [historicoData, setHistoricoData] = useState<Array<{data: string, valor: number}>>([]);
+  const [performanceData, setPerformanceData] = useState<Array<{data: string, carteira: number, cdi: number}>>([]);
+  const [alocacaoData, setAlocacaoData] = useState<Array<{label: string, percentual: number, color: string}>>([]);
+  const [ativosData, setAtivosData] = useState<Array<{
+    id: string, nome: string, emoji: string, capitalInvestido: number,
+    tir: number, progresso: number, prazoRestante: number, recebido: number
+  }>>([]);
 
-  const performanceData = [
-    { data: 'Jan/24', carteira: 0, cdi: 0 },
-    { data: 'Abr/24', carteira: 6.25, cdi: 3.75 },
-    { data: 'Jul/24', carteira: 18.75, cdi: 7.5 },
-    { data: 'Out/24', carteira: 35.3, cdi: 10.5 }
-  ];
+  // Fetch user session and data
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
 
-  const alocacaoData = [
-    { label: 'A1', percentual: 35, color: '#ff6b35' },
-    { label: 'A2', percentual: 32, color: '#ff8c42' },
-    { label: 'A3', percentual: 10, color: '#ffb84d' },
-    { label: 'A4', percentual: 23, color: '#ffd670' }
-  ];
+        // Get user session
+        const session = await authClient.getSession();
+        if (session?.user?.name) {
+          setUserName(session.user.name);
+        }
 
-  const ativosData = [
-    { id: '1', nome: 'AtaAI', emoji: '🤖', capitalInvestido: 10000, tir: 25, progresso: 35, prazoRestante: 9, recebido: 5042 },
-    { id: '2', nome: 'Homodeus AI', emoji: '🧠', capitalInvestido: 42000, tir: 15, progresso: 80, prazoRestante: 2, recebido: 2700 },
-    { id: '3', nome: 'TaskTracker', emoji: '📋', capitalInvestido: 10000, tir: 25, progresso: 50, prazoRestante: 11, recebido: 5000 },
-    { id: '4', nome: 'Passei', emoji: '🎓', capitalInvestido: 8000, tir: 28, progresso: 80, prazoRestante: 6, recebido: 5000 },
-    { id: '5', nome: 'ContratoAI', emoji: '📄', capitalInvestido: 500, tir: 30, progresso: 97, prazoRestante: 1, recebido: 750 },
-    { id: '6', nome: 'SyncAgent', emoji: '🔄', capitalInvestido: 2500, tir: 18, progresso: 100, prazoRestante: 0, recebido: 1800 },
-    { id: '7', nome: 'FoiscaAI', emoji: '⚡', capitalInvestido: 8000, tir: 17, progresso: 100, prazoRestante: 0, recebido: 10000 },
-    { id: '8', nome: 'CloudOpus', emoji: '☁️', capitalInvestido: 1000, tir: 18, progresso: 100, prazoRestante: 0, recebido: 1800 },
-    { id: '9', nome: 'PredictivOps', emoji: '🔮', capitalInvestido: 1000, tir: 18, progresso: 100, prazoRestante: 0, recebido: 1800 },
-    { id: '10', nome: 'WinwithAI', emoji: '🏆', capitalInvestido: 12300, tir: 23, progresso: 100, prazoRestante: 0, recebido: 15000 },
-    { id: '11', nome: 'Katena', emoji: '🔗', capitalInvestido: 1000, tir: 22, progresso: 100, prazoRestante: 0, recebido: 1800 },
-    { id: '12', nome: 'UniQ', emoji: '🎯', capitalInvestido: 2500, tir: 18, progresso: 100, prazoRestante: 0, recebido: 3500 },
-    { id: '13', nome: 'SensitivAI', emoji: '🧬', capitalInvestido: 1000, tir: 18, progresso: 100, prazoRestante: 0, recebido: 1800 }
-  ];
+        // Fetch investimentos, empresas, and contratos in parallel
+        const [investimentosRes, empresasRes, contratosRes] = await Promise.all([
+          fetch('/api/investimentos'),
+          fetch('/api/empresas'),
+          fetch('/api/contratos'),
+        ]);
+
+        const investimentos = await investimentosRes.json();
+        const empresas = await empresasRes.json();
+        const contratos = await contratosRes.json();
+
+        // Create lookup maps
+        const empresaMap = new Map(empresas.map((e: {id: string}) => [e.id, e]));
+        const contratoMap = new Map(contratos.map((c: {id: string}) => [c.id, c]));
+
+        // Transform investimentos to ativosData
+        const ativos = investimentos.map((inv: {
+          id: string;
+          contratoId: string;
+          valorAportado: number;
+          valorTotalRecebido: number;
+          tirRealizado: number | null;
+        }) => {
+          const contrato = contratoMap.get(inv.contratoId);
+          const empresa = contrato ? empresaMap.get(contrato.empresaId) : null;
+
+          // Calculate progress based on valor recebido vs valor aportado
+          const progresso = inv.valorAportado > 0
+            ? Math.min(100, (Number(inv.valorTotalRecebido) / Number(inv.valorAportado)) * 100)
+            : 0;
+
+          // Calculate months remaining
+          const dataFim = contrato?.dataFimPrevista ? new Date(contrato.dataFimPrevista) : new Date();
+          const hoje = new Date();
+          const mesesRestantes = Math.max(0, Math.floor((dataFim.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24 * 30)));
+
+          return {
+            id: inv.id,
+            nome: empresa?.nomeFantasia || empresa?.razaoSocial || 'Empresa',
+            emoji: empresa?.emoji || '🏢',
+            capitalInvestido: Number(inv.valorAportado),
+            tir: inv.tirRealizado ? Number(inv.tirRealizado) : 0,
+            progresso: Math.round(progresso),
+            prazoRestante: mesesRestantes,
+            recebido: Number(inv.valorTotalRecebido)
+          };
+        });
+
+        setAtivosData(ativos);
+
+        // Calculate metrics from investimentos
+        const totalInvestido = investimentos.reduce((sum: number, inv: {valorAportado: number}) => sum + Number(inv.valorAportado), 0);
+        const totalRecebido = investimentos.reduce((sum: number, inv: {valorTotalRecebido: number}) => sum + Number(inv.valorTotalRecebido), 0);
+
+        // Mock historical data for now (would need EvolucaoMetricas table)
+        setHistoricoData([
+          { data: 'Jan/24', valor: totalInvestido * 0.8 },
+          { data: 'Abr/24', valor: totalInvestido * 0.85 },
+          { data: 'Jul/24', valor: totalInvestido * 0.95 },
+          { data: 'Out/24', valor: totalInvestido + totalRecebido }
+        ]);
+
+        // Mock performance data
+        setPerformanceData([
+          { data: 'Jan/24', carteira: 0, cdi: 0 },
+          { data: 'Abr/24', carteira: 6.25, cdi: 3.75 },
+          { data: 'Jul/24', carteira: 18.75, cdi: 7.5 },
+          { data: 'Out/24', carteira: 35.3, cdi: 10.5 }
+        ]);
+
+        // Mock allocation data (would need score/risk data)
+        setAlocacaoData([
+          { label: 'A1', percentual: 35, color: '#ff6b35' },
+          { label: 'A2', percentual: 32, color: '#ff8c42' },
+          { label: 'A3', percentual: 10, color: '#ffb84d' },
+          { label: 'A4', percentual: 23, color: '#ffd670' }
+        ]);
+
+      } catch (error) {
+        console.error('Error fetching portfolio data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="p-8">
+          <h1 className="text-3xl font-bold text-white mb-8">
+            Olá, {userName || 'Investidor'}
+          </h1>
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
       <div className="p-8">
-              <h1 className="text-3xl font-bold text-white mb-8">Olá, Henrique</h1>
+              <h1 className="text-3xl font-bold text-white mb-8">
+          Olá, {userName || 'Investidor'}
+        </h1>
         {/* Header com Saldo Total */}
         <Card className="mb-8 bg-gradient-to-r from-muted to-muted/50 border-none">
           <CardContent className="py-8">

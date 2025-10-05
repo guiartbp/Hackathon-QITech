@@ -1,5 +1,5 @@
 "use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatCurrency, formatDate } from '@/lib/format';
+import { authClient } from '@/lib/auth-client';
 
 // Funções auxiliares
 function calcularDiasRestantes(dataStr: string): number {
@@ -44,63 +45,151 @@ interface ContratoDivida {
   status: 'ativo' | 'quitado';
 }
 
-// Mock Data
-const mockPropostaAberta: PropostaAberta | null = {
-  id: '2024-10-CRM',
-  diasAberta: 2,
-  totalDivida: 500000,
-  rendimento: 21,
-  duracao: 18,
-  progressoFunding: 69,
-  valorFinanciado: 345000,
-  valorRestante: 155000
-};
+interface PropostaAPI {
+  id: string;
+  statusFunding: string;
+  valorSolicitado: string | number;
+  valorFinanciado?: string | number;
+  percentualMrr?: string | number;
+  duracaoMeses?: number;
+  diasAberta?: number;
+  dataAbertura?: string;
+  empresa?: {
+    tomador?: {
+      uidUsuario: string;
+    };
+  };
+}
 
-const mockContratos: ContratoDivida[] = [
-  {
-    id: '1',
-    proposta_id: '2024-10-CRM',
-    valor_total: 80000,
-    multiplo_cap: 1.32,
-    valor_pago: 47500,
-    percentual_pago: 45,
-    proximo_pagamento: {
-      data: '2024-11-28',
-      valor: 5100,
-      dias_restantes: 18
-    },
-    status: 'ativo'
-  },
-  {
-    id: '2',
-    proposta_id: '2024-09-MKT',
-    valor_total: 80000,
-    multiplo_cap: 1.32,
-    valor_pago: 105600,
-    percentual_pago: 100,
-    status: 'quitado'
-  },
-  {
-    id: '3',
-    proposta_id: '2024-08-EXP',
-    valor_total: 120000,
-    multiplo_cap: 1.25,
-    valor_pago: 89000,
-    percentual_pago: 59,
-    proximo_pagamento: {
-      data: '2024-12-15',
-      valor: 7200,
-      dias_restantes: 35
-    },
-    status: 'ativo'
-  }
-];
+interface ContratoAPI {
+  id: string;
+  valorPrincipal: string | number;
+  multiploCap: string | number;
+  valorTotalPago?: string | number;
+  valorTotalDevido: string | number;
+  statusContrato: string;
+  proposta?: {
+    id: string;
+  };
+  empresa?: {
+    tomador?: {
+      uidUsuario: string;
+    };
+  };
+}
+
+interface PagamentoAPI {
+  id: string;
+  contratoId: string;
+  status: string;
+  dataVencimento: string;
+  valorEsperado: string | number;
+}
 
 export default function MinhasDividas() {
-  const [propostaAberta] = useState<PropostaAberta | null>(mockPropostaAberta);
-  const [contratos] = useState<ContratoDivida[]>(mockContratos);
+  const [loading, setLoading] = useState(true);
+  const [propostaAberta, setPropostaAberta] = useState<PropostaAberta | null>(null);
+  const [contratos, setContratos] = useState<ContratoDivida[]>([]);
   const [tabAtiva, setTabAtiva] = useState('todos');
   const navigate = useRouter();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+
+        // Get user session to identify the tomador
+        const session = await authClient.getSession();
+        if (!session?.user?.id) {
+          console.error('No user session found');
+          setLoading(false);
+          return;
+        }
+
+        // Fetch propostas, contratos, and pagamentos in parallel
+        const [propostasRes, contratosRes, pagamentosRes] = await Promise.all([
+          fetch('/api/propostas'),
+          fetch('/api/contratos'),
+          fetch('/api/pagamentos'),
+        ]);
+
+        const propostas: PropostaAPI[] = await propostasRes.json();
+        const contratosData: ContratoAPI[] = await contratosRes.json();
+        const pagamentos: PagamentoAPI[] = await pagamentosRes.json();
+
+        // Find open proposta for current user's empresa
+        const openProposta = propostas.find((p) =>
+          p.statusFunding === 'ABERTO' && p.empresa?.tomador?.uidUsuario === session.user.id
+        );
+
+        if (openProposta) {
+          const diasAberta = openProposta.diasAberta ||
+            (openProposta.dataAbertura ?
+              Math.ceil((new Date().getTime() - new Date(openProposta.dataAbertura).getTime()) / (1000 * 60 * 60 * 24)) :
+              0);
+
+          const valorFinanciado = Number(openProposta.valorFinanciado || 0);
+          const valorSolicitado = Number(openProposta.valorSolicitado);
+          const progressoFunding = valorSolicitado > 0 ? (valorFinanciado / valorSolicitado) * 100 : 0;
+          const valorRestante = valorSolicitado - valorFinanciado;
+
+          setPropostaAberta({
+            id: openProposta.id,
+            diasAberta,
+            totalDivida: valorSolicitado,
+            rendimento: Number(openProposta.percentualMrr || 0),
+            duracao: openProposta.duracaoMeses || 0,
+            progressoFunding,
+            valorFinanciado,
+            valorRestante,
+          });
+        }
+
+        // Transform contratos for current user
+        const userContratos = contratosData
+          .filter((c) => c.empresa?.tomador?.uidUsuario === session.user.id)
+          .map((c) => {
+            const valorTotal = Number(c.valorPrincipal);
+            const multiploCap = Number(c.multiploCap);
+            const valorPago = Number(c.valorTotalPago || 0);
+            const valorTotalDevido = Number(c.valorTotalDevido);
+            const percentualPago = valorTotalDevido > 0 ? (valorPago / valorTotalDevido) * 100 : 0;
+
+            // Find next payment for this contract
+            const contratosPagamentos = pagamentos.filter((p) =>
+              p.contratoId === c.id && p.status === 'AGENDADO'
+            ).sort((a, b) =>
+              new Date(a.dataVencimento).getTime() - new Date(b.dataVencimento).getTime()
+            );
+
+            const proximoPagamento = contratosPagamentos[0];
+
+            return {
+              id: c.id,
+              proposta_id: c.proposta?.id || '',
+              valor_total: valorTotal,
+              multiplo_cap: multiploCap,
+              valor_pago: valorPago,
+              percentual_pago: Math.round(percentualPago),
+              proximo_pagamento: proximoPagamento ? {
+                data: proximoPagamento.dataVencimento,
+                valor: Number(proximoPagamento.valorEsperado),
+                dias_restantes: calcularDiasRestantes(proximoPagamento.dataVencimento),
+              } : undefined,
+              status: c.statusContrato === 'QUITADO' ? 'quitado' : 'ativo',
+            } as ContratoDivida;
+          });
+
+        setContratos(userContratos);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   // Filtrar contratos por tab
   const contratosFiltrados = contratos.filter(c => {
@@ -115,6 +204,16 @@ export default function MinhasDividas() {
     if (status === 'quitado') return 'secondary';
     return 'outline';
   };
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
