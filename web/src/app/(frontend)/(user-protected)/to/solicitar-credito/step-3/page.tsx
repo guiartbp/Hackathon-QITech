@@ -68,86 +68,29 @@ export default function Step3Page() {
     try {
       setLoading(true);
       
-      // Mock API call - replace with actual endpoint
-      // const response = await fetch('/api/simulacao', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ valor_solicitado: valorSolicitado })
-      // });
-      // const data = await response.json();
-
-      // Mock simulation data for RBF
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API delay
-      
-      // RBF Parameters based on score and amount
-      const mrrAtual = 85000; // Mock current MRR: R$ 85k/month
-      const percentualMrr = 4.2; // 4.2% of MRR per month
-      const multiplicoCap = 1.28; // 1.28x multiplier cap
-      
-      const valorTotalRetorno = valorSolicitado * multiplicoCap;
-      const custoTotal = valorTotalRetorno - valorSolicitado;
-
-      // Generate projections for 3 scenarios
-      const cenarios = [
-        { nome: 'conservador', crescimento: 0.5 }, // 0.5% MRR growth per month
-        { nome: 'base', crescimento: 2.0 },        // 2% MRR growth per month  
-        { nome: 'otimista', crescimento: 4.0 }     // 4% MRR growth per month
-      ];
-
-      const projecoes = cenarios.map(cenario => {
-        const cronograma = [];
-        let mrrProjetado = mrrAtual;
-        let acumuladoPago = 0;
-        let mes = 1;
-
-        while (acumuladoPago < valorTotalRetorno && mes <= 60) { // Max 5 years
-          const valorParcela = mrrProjetado * (percentualMrr / 100);
-          acumuladoPago = Math.min(acumuladoPago + valorParcela, valorTotalRetorno);
-          const saldoRestante = valorTotalRetorno - acumuladoPago;
-
-          const dataVencimento = new Date();
-          dataVencimento.setMonth(dataVencimento.getMonth() + mes);
-
-          cronograma.push({
-            mes,
-            data: dataVencimento.toLocaleDateString('pt-BR'),
-            mrr_projetado: mrrProjetado,
-            valor_parcela: valorParcela,
-            acumulado_pago: acumuladoPago,
-            saldo_restante: Math.max(0, saldoRestante)
-          });
-
-          // Update MRR for next month
-          mrrProjetado *= (1 + cenario.crescimento / 100);
-          mes++;
-
-          if (saldoRestante <= 0) break;
-        }
-
-        return {
-          cenario: cenario.nome as 'conservador' | 'base' | 'otimista',
-          crescimento_mrr_mensal: cenario.crescimento,
-          prazo_estimado_meses: cronograma.length,
-          cronograma
-        };
+      // API call para simulação
+      const response = await fetch('/api/simulacao', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ valor_solicitado: valorSolicitado })
       });
 
-      const mockSimulation: SimulationData = {
-        valor_solicitado: valorSolicitado,
-        multiplo_cap: multiplicoCap,
-        percentual_mrr: percentualMrr,
-        mrr_atual: mrrAtual,
-        valor_total_retorno: valorTotalRetorno,
-        custo_total: custoTotal,
-        primeira_parcela: projecoes[1].cronograma[0].data, // Use base scenario
-        projecoes
-      };
+      if (!response.ok) {
+        throw new Error('Erro ao gerar simulação');
+      }
 
-      setSimulation(mockSimulation);
+      const data = await response.json();
+
+      setSimulation(data);
+      
+      // Save simulation to wizard data
+      const currentData = JSON.parse(localStorage.getItem('wizardData') || '{}');
+      currentData.simulation = data;
+      localStorage.setItem('wizardData', JSON.stringify(currentData));
       
     } catch (error) {
-      toast.error('Erro ao carregar simulação');
-      console.error('Simulation error:', error);
+      console.error('Erro ao buscar simulação:', error);
+      toast.error('Erro ao gerar simulação. Tente novamente.');
     } finally {
       setLoading(false);
     }

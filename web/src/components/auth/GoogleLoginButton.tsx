@@ -1,8 +1,6 @@
 'use client'
 import clsx from "clsx";
 import Image from "next/image";
-// import { useSearchParams } from "next/navigation";
-import { isSafeRedirect } from "@/utils";
 
 import { authClient } from "@/lib/auth-client";
 import { ButtonHTMLAttributes } from "react";
@@ -13,10 +11,6 @@ interface GoogleAuthButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> 
 };
 
 function GoogleAuthButton({ className, text, ...props }: GoogleAuthButtonProps) {
-  // const searchParams = useSearchParams();
-  // const callbackUrl = searchParams.get('callbackUrl') ?? "/";
-  const callbackUrl = "/";
-  const safeCallbackUrl = isSafeRedirect(callbackUrl) ? callbackUrl : "/";
   
   return ( 
       <div
@@ -29,10 +23,32 @@ function GoogleAuthButton({ className, text, ...props }: GoogleAuthButtonProps) 
           if (props.disabled) {
             return
           } 
+          
+          // Sign in with Google
           await authClient.signIn.social({
             provider: "google",
-            callbackURL: safeCallbackUrl,
+            // Will handle redirect after successful authentication
           });
+          
+          // After successful Google login, check user type and redirect
+          try {
+            const session = await authClient.getSession();
+            
+            if (session?.data?.user) {
+              const userType = (session.data.user as any).userType;
+              
+              // Redirect based on user type
+              if (userType === 'investor') {
+                window.location.href = '/in/portfolio/evolucao';
+              } else if (userType === 'founder') {
+                window.location.href = '/to/minhas_dividas';
+              } else {
+                window.location.href = '/';
+              }
+            }
+          } catch (error) {
+            console.error('Error getting session after Google login:', error);
+          }
         }}>
             <Image
               src={`/icons/google-logo.png`}

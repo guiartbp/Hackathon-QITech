@@ -71,41 +71,49 @@ export default function Step4Page() {
       return;
     }
 
+    if (!wizardData) {
+      toast.error('Dados do wizard não encontrados');
+      return;
+    }
+
     setSubmitting(true);
 
     try {
-      // Mock API call to submit the credit request
-      // const response = await fetch('/api/propostas', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({
-      //     valor_solicitado: wizardData.valorSolicitado,
-      //     proposito: wizardData.proposito,
-      //     detalhamento: wizardData.detalhamento,
-      //     apis_conectadas: wizardData.connections,
-      //     simulacao: wizardData.simulation
-      //   })
-      // });
-      // const result = await response.json();
+      // Submeter proposta via API
+      const response = await fetch('/api/propostas/wizard', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          empresaId: '', // Será obtido do session no backend
+          valorSolicitado: wizardData.valorSolicitado,
+          proposito: wizardData.proposito,
+          detalhamento: wizardData.detalhamento,
+          connections: wizardData.connections,
+          simulation: wizardData.simulation,
+          multiploCap: wizardData.simulation.multiplo_cap,
+          percentualMrr: wizardData.simulation.percentual_mrr,
+          duracaoMeses: wizardData.simulation.projecoes[1]?.prazo_estimado_meses,
+        })
+      });
 
-      // Mock successful submission
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      const mockResult = {
-        success: true,
-        contrato_id: 'PROP-2024-' + Math.random().toString(36).substr(2, 6).toUpperCase(),
-        status: 'em_analise'
-      };
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.erro || 'Erro ao criar proposta');
+      }
 
       // Save result and clear wizard data
-      localStorage.setItem('submissionResult', JSON.stringify(mockResult));
+      localStorage.setItem('submissionResult', JSON.stringify(result));
       localStorage.removeItem('wizardData');
+
+      toast.success('Proposta enviada com sucesso!');
 
       // Navigate to success page
       router.push('/to/solicitar-credito/sucesso');
 
     } catch (error) {
-      toast.error('Erro ao enviar proposta. Tente novamente.');
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao enviar proposta';
+      toast.error(errorMessage);
       console.error('Submission error:', error);
     } finally {
       setSubmitting(false);

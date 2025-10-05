@@ -27,7 +27,7 @@ export default function CadastroOnboarding() {
     }
 
     // Carregar dados salvos
-    const saved = onboardingStorage.getStep(7);
+    const saved = onboardingStorage.getStep(7) as Step7Data | null;
     if (saved) {
       setEstrategia(saved.estrategia_investimento);
     }
@@ -51,7 +51,7 @@ export default function CadastroOnboarding() {
       // Coletar todos os dados do onboarding
       const allData = onboardingStorage.getAllSteps();
 
-      // Enviar para API
+      // 1. Enviar dados do investidor para API
       const response = await fetch('/api/onboarding/investor/complete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -62,8 +62,8 @@ export default function CadastroOnboarding() {
           patrimonio_liquido: allData.step5?.patrimonio_liquido,
           declaracao_risco: allData.step5?.declaracao_risco,
           experiencia_ativos_risco: allData.step5?.experiencia_ativos_risco,
-          modelo_investimento: estrategia, // Use selected strategy
-          fonte_recursos: null, // Can be added to form if needed
+          modelo_investimento: estrategia,
+          fonte_recursos: null,
         }),
       });
 
@@ -71,7 +71,21 @@ export default function CadastroOnboarding() {
         throw new Error('Erro ao salvar dados no banco');
       }
 
-      toast.success('Cadastro enviado com sucesso! 🎉');
+      // 2. Criar wallet automaticamente com saldo R$ 0
+      const walletResponse = await fetch('/api/wallets/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!walletResponse.ok) {
+        console.error('Erro ao criar wallet, mas continuando...');
+        // Não bloqueia o fluxo se a wallet falhar
+      } else {
+        const walletData = await walletResponse.json();
+        console.log('Wallet criada:', walletData);
+      }
+
+      toast.success('Cadastro e carteira criados com sucesso! 🎉');
 
       // Limpar dados do localStorage
       onboardingStorage.clearAll();

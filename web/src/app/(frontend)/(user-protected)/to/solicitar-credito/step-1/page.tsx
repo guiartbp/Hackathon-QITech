@@ -29,19 +29,14 @@ export default function Step1Page() {
   useEffect(() => {
     async function fetchDadosTomador() {
       try {
-        // Mock API call - replace with actual endpoint
-        // const response = await fetch('/api/tomadores/me/perfil-completo');
-        // const data = await response.json();
+        // Buscar dados reais do tomador
+        const response = await fetch('/api/tomadores/me/perfil-completo');
         
-        // Mock data simulating real SaaS metrics
-        const data = {
-          limite_maximo: 500000,
-          score: 750,
-          mrr_atual: 85000,
-          crescimento_mrr_mensal: 2.1, // 2.1% growth per month
-          percentual_mrr_ofertado: 4.2, // 4.2% of MRR as payment
-          multiplo_cap: 1.28 // 1.28x multiplier
-        };
+        if (!response.ok) {
+          throw new Error('Erro ao buscar dados do tomador');
+        }
+        
+        const data = await response.json();
         
         setLimiteMax(data.limite_maximo);
         setScoreAtual(data.score);
@@ -53,10 +48,10 @@ export default function Step1Page() {
         // Load saved data if exists
         const savedData = localStorage.getItem('wizardData');
         if (savedData) {
-          const { valorSolicitado: saved_valor, proposito: saved_proposito, detalhamento: saved_detalhamento } = JSON.parse(savedData);
-          setValorSolicitado(saved_valor || 50000);
-          setProposito(saved_proposito || '');
-          setDetalhamento(saved_detalhamento || '');
+          const parsed = JSON.parse(savedData);
+          setValorSolicitado(parsed.valorSolicitado || 50000);
+          setProposito(parsed.proposito || '');
+          setDetalhamento(parsed.detalhamento || '');
         } else {
           setValorSolicitado(50000);
         }

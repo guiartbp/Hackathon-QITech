@@ -97,9 +97,9 @@ export default function Sucesso() {
   };
 
   const handleIrDashboard = () => {
-    // Em produção, redirecionaria para dashboard autenticado
-    toast.info('Redirecionando para dashboard...');
-    router.push('/dashboard');
+    // Redirecionar para página de dívidas do founder
+    toast.info('Redirecionando para suas dívidas...');
+    router.push('/to/minhas_dividas');
   };
 
   const nomeUsuario = dadosOnboarding.step1?.nome_completo?.split(' ')[0] || 'Usuário';

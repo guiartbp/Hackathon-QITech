@@ -37,11 +37,33 @@ function CredentialsLoginForm({
       const result = await authClient.signIn.email({
         email,
         password,
-        callbackURL: callbackUrl ?? "/",
       });
 
       if (result.error) {
         toast.error((result.error?.message || 'Erro desconhecido'))
+      } else {
+        // Success! User logged in
+        toast.success('Login realizado com sucesso!');
+        
+        // Get user session to check userType
+        const session = await authClient.getSession();
+        
+        if (session?.data?.user) {
+          const userType = (session.data.user as any).userType;
+          
+          // Redirect based on user type
+          if (userType === 'investor') {
+            window.location.href = '/in/portfolio/evolucao';
+          } else if (userType === 'founder') {
+            window.location.href = '/to/minhas_dividas';
+          } else {
+            // Default redirect if userType is not set
+            window.location.href = callbackUrl ?? '/';
+          }
+        } else {
+          // Fallback if session is not available
+          window.location.href = callbackUrl ?? '/';
+        }
       }
     } catch (error) {
       toast.error('Erro: ' + String(error))
