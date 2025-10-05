@@ -34,11 +34,15 @@ export default function CadastroPage() {
     <div className="min-h-screen">
       <div className="grid lg:grid-cols-[2fr_3fr] min-h-screen">
         {/* Left side - Form */}
-        <div className={`flex flex-col items-center justify-center px-8 py-16 transition-colors duration-500 ${
+        <div className={`relative flex flex-col items-center justify-center px-8 py-16 transition-colors duration-500 ${
           isInvestor ? 'bg-black' : 'bg-gradient-to-br from-orange-600 to-orange-700'
         }`}>
+          {/* Black gradient overlay for Founder mode */}
+          {!isInvestor && (
+            <div className="absolute inset-0 z-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+          )}
           {/* Toggle Button */}
-          <div className="w-full max-w-lg mb-8">
+          <div className="relative z-10 w-full max-w-lg mb-8">
             <div className="flex bg-gray-800 rounded-full p-1 w-fit mx-auto">
               <button
                 onClick={() => setUserType('investor')}
@@ -64,31 +68,39 @@ export default function CadastroPage() {
           </div>
 
           {/* Form */}
-          <div className="w-full max-w-lg">
-            <CadastroForm isDarkBackground={isInvestor} />
+          <div className="relative z-10 w-full max-w-lg">
+            <CadastroForm isDarkBackground={true} />
           </div>
         </div>
         
         {/* Right side - Content */}
-        <div className={`flex items-center justify-center p-16 transition-colors duration-500 ${
+        <div className={`relative flex items-center justify-center p-16 transition-colors duration-500 overflow-hidden ${
           isInvestor 
             ? 'bg-gradient-to-br from-orange-600 to-orange-700 text-white' 
             : 'bg-black text-white'
         }`}>
-          <div className="text-center space-y-8">
+          {/* Background Images */}
+          <div className="absolute inset-0 z-0">
+            <Image
+              src={isInvestor ? "/login-investor.png" : "/login-founder.png"}
+              alt={isInvestor ? "Investor background" : "Founder background"}
+              fill
+              className="object-cover opacity-70"
+            />
+          </div>
+          
+          {/* Black gradient overlay for Investor mode */}
+          {isInvestor && (
+            <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+          )}
+          
+          <div className="relative z-10 text-center space-y-8">
             <h2 className="text-4xl md:text-6xl font-bold leading-tight">
               {currentContent.title}
             </h2>
             <p className="text-xl md:text-2xl leading-relaxed max-w-md mx-auto">
               {currentContent.subtitle}
             </p>
-            
-            {/* Image or Emoji placeholder */}
-            <div className="flex justify-center">
-              <div className="w-40 h-40 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-sm">
-                <div className="text-8xl">{currentContent.emoji}</div>
-              </div>
-            </div>
             
             <p className={`text-lg max-w-md mx-auto leading-relaxed ${
               isInvestor ? 'text-orange-100' : 'text-gray-300'
