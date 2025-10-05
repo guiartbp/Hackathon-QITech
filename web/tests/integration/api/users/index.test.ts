@@ -2,7 +2,7 @@ import { describe, it, vi, beforeEach, expect, Mock } from "vitest";
 import * as userService from '@/backend/services/users'
 import { postUserMock } from "../../mocks/user";
 import { createRequest } from "../../mocks/requests";
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth";
 
 vi.mock('@/backend/services/users', () => ({
   findUserByEmail: vi.fn(),

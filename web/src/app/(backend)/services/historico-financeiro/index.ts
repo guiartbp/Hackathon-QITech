@@ -7,6 +7,9 @@ export const HistoricoFinanceiroService = {
       include: {
         empresa: true,
       },
+      orderBy: {
+        periodo: 'desc',
+      },
     });
   },
 
@@ -25,7 +28,7 @@ export const HistoricoFinanceiroService = {
     return prisma.historicoFinanceiro.create({
       data: {
         ...resto,
-        periodo: new Date(periodo), // Converte string para Date
+        periodo: new Date(periodo),
         empresa: {
           connect: { id: empresaId },
         },
@@ -43,12 +46,10 @@ export const HistoricoFinanceiroService = {
       where: { id },
       data: {
         ...resto,
-        ...(periodo && { periodo: new Date(periodo) }), // Converte apenas se periodo foi fornecido
-        ...(empresaId && {
-          empresa: {
-            connect: { id: empresaId },
-          },
-        }),
+        periodo: new Date(periodo),
+        empresa: {
+          connect: { id: empresaId },
+        },
       },
       include: {
         empresa: true,

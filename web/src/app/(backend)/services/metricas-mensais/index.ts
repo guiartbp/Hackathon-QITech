@@ -1,11 +1,14 @@
 import { prisma } from "@/lib/prisma";
-import { MetricasMensaisInput } from "../schemas/metricas-mensais";
+import { MetricasMensaisInput } from "../../schemas/metricas-mensais";
 
 export const MetricasMensaisService = {
   listar: async () => {
     return prisma.metricasMensais.findMany({
       include: {
         empresa: true,
+      },
+      orderBy: {
+        mesReferencia: 'desc',
       },
     });
   },

@@ -1,4 +1,4 @@
-import { emailSchema, passwordSchema } from "@/backend/schemas";
+import { emailSchema, passwordSchema } from "@/app/(backend)/schemas";
 
 export const validateEmail = (value: string) => {
   try {

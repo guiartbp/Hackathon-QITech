@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { blockForbiddenRequests, returnInvalidDataErrors, validBody, zodErrorHandler } from "@/utils/api";
 import { AllowedRoutes } from "@/types";
-import { idSchema, updatePasswordSchema } from "@/backend/schemas/";
-import { auth } from "@/auth";
+import { idSchema, updatePasswordSchema } from "@/app/(backend)/schemas";
+import { auth } from "@/lib/auth";
 
 const allowedRoles: AllowedRoutes = {
   PATCH: ['ADMIN', 'tomador', 'investidor'],

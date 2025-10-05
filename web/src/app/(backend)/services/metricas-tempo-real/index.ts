@@ -1,11 +1,14 @@
 import { prisma } from "@/lib/prisma";
-import { MetricasTempoRealInput } from "../schemas/metricas-tempo-real";
+import { MetricasTempoRealInput } from "../../schemas/metricas-tempo-real";
 
 export const MetricasTempoRealService = {
   listar: async () => {
     return prisma.metricasTempoReal.findMany({
       include: {
         empresa: true,
+      },
+      orderBy: {
+        timestampCaptura: 'desc',
       },
     });
   },

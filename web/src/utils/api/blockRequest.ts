@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/auth";
-import type { Role } from "@/generated/prisma";
+import { auth } from "@/lib/auth";
+import type { Role } from "better-auth/plugins/access";
 
 export async function blockForbiddenRequests(
   request: NextRequest,

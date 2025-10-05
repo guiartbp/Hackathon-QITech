@@ -1,5 +1,5 @@
-import { MetricasTempoRealService } from "@/app/(backend)/services/metricas-tempo-real";
-import { MetricasTempoRealSchema } from "@/app/(backend)/schemas/metricas-tempo-real";
+import { EvolucaoMetricasService } from "@/app/(backend)/services/evolucao-metricas";
+import { EvolucaoMetricasSchema } from "@/app/(backend)/schemas/evolucao-metricas";
 import { ZodError } from "zod";
 
 function getErrorMessage(err: unknown): string {
@@ -15,9 +15,9 @@ export async function GET(
   req: Request,
   { params }: { params: { id: string } }
 ) {
-  const metrica = await MetricasTempoRealService.buscarPorId(params.id);
+  const metrica = await EvolucaoMetricasService.buscarPorId(params.id);
   if (!metrica) {
-    return Response.json({ erro: "Métrica não encontrada" }, { status: 404 });
+    return Response.json({ erro: "Evolução de métrica não encontrada" }, { status: 404 });
   }
   return Response.json(metrica);
 }
@@ -28,8 +28,8 @@ export async function PATCH(
 ) {
   try {
     const body = await req.json();
-    const dados = MetricasTempoRealSchema.parse(body);
-    const atualizado = await MetricasTempoRealService.atualizar(params.id, dados);
+    const dados = EvolucaoMetricasSchema.parse(body);
+    const atualizado = await EvolucaoMetricasService.atualizar(params.id, dados);
     return Response.json(atualizado);
   } catch (err: unknown) {
     const status = err instanceof ZodError ? 422 : 400;
@@ -42,7 +42,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    await MetricasTempoRealService.remover(params.id);
+    await EvolucaoMetricasService.remover(params.id);
     return new Response(null, { status: 204 });
   } catch (err: unknown) {
     return Response.json({ erro: getErrorMessage(err) }, { status: 400 });

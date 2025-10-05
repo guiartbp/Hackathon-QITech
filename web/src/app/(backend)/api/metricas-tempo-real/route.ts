@@ -4,7 +4,7 @@ import { ZodError } from "zod";
 
 function getErrorMessage(err: unknown): string {
   if (err instanceof ZodError) {
-    return err.issues.map((e: any) => e.message).join("; ");
+    return err.errors.map(e => e.message).join("; ");
   }
   if (err instanceof Error) return err.message;
   if (typeof err === "string") return err;
@@ -12,8 +12,8 @@ function getErrorMessage(err: unknown): string {
 }
 
 export async function GET() {
-  const metricas = await MetricasTempoRealService.listar();
-  return Response.json(metricas);
+  const metricasTempoReal = await MetricasTempoRealService.listar();
+  return Response.json(metricasTempoReal);
 }
 
 export async function POST(req: Request) {

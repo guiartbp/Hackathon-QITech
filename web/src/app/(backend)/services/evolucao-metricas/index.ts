@@ -1,11 +1,14 @@
 import { prisma } from "@/lib/prisma";
-import { EvolucaoMetricasInput } from "../schemas/evolucao-metricas";
+import { EvolucaoMetricasInput } from "../../schemas/evolucao-metricas";
 
 export const EvolucaoMetricasService = {
   listar: async () => {
     return prisma.evolucaoMetricas.findMany({
       include: {
         empresa: true,
+      },
+      orderBy: {
+        dataReferencia: 'desc',
       },
     });
   },

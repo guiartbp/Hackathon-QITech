@@ -1,11 +1,14 @@
 import { prisma } from "@/lib/prisma";
-import { MrrPorPlanoInput } from "../schemas/mrr-por-plano";
+import { MrrPorPlanoInput } from "../../schemas/mrr-por-plano";
 
 export const MrrPorPlanoService = {
   listar: async () => {
     return prisma.mrrPorPlano.findMany({
       include: {
         empresa: true,
+      },
+      orderBy: {
+        mesReferencia: 'desc',
       },
     });
   },

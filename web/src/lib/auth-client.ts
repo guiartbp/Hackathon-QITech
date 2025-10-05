@@ -1,4 +1,4 @@
-import type { auth } from "@/auth";
+import type { auth } from "@/lib/auth";
 import { createAuthClient } from "better-auth/react" // make sure to import from better-auth/react
 import { customSessionClient } from "better-auth/client/plugins";
 

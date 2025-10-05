@@ -1,7 +1,7 @@
 import { getAllUsers, findUserByEmail } from "../../services/users";
 import { registerSchema } from "../../schemas";
 import { ZodError } from "zod";
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth";
 
 function getErrorMessage(err: unknown): string {
   if (err instanceof ZodError) {

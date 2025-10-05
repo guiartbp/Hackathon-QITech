@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const MetricasMensaisSchema = z.object({
   empresaId: z.string().min(1, "ID da empresa é obrigatório"),
-  mesReferencia: z.string().datetime("Data inválida"),
+  mesReferencia: z.string().datetime("Mês de referência é obrigatório"),
   mrrFinal: z.number().optional(),
   mrrMedio: z.number().optional(),
   arrFinal: z.number().optional(),

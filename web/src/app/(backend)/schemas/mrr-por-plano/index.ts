@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const MrrPorPlanoSchema = z.object({
   empresaId: z.string().min(1, "ID da empresa é obrigatório"),
-  mesReferencia: z.string().datetime("Data inválida"),
+  mesReferencia: z.string().datetime("Mês de referência é obrigatório"),
   nomePlano: z.string().min(1, "Nome do plano é obrigatório"),
   mrrPlano: z.number().min(0, "MRR do plano deve ser maior ou igual a zero"),
   numClientesPlano: z.number().int().optional(),
