@@ -428,19 +428,22 @@ model Pagamento {
 }
 
 model Repasse {
-  id                 String       @id @default(uuid())
-  pagamentoId        String       @map("pagamento_id")
-  investimentoId     String       @map("investimento_id")
-  investidorId       String       @map("investidor_id")
-  valorRepasse       Decimal      @map("valor_repasse") @db.Decimal(15, 2)
-  principalDevolvido Decimal?     @map("principal_devolvido") @db.Decimal(15, 2)
-  retornoBruto       Decimal?     @map("retorno_bruto") @db.Decimal(15, 2)
-  status             String       @default("PENDENTE")
-  dataExecucao       DateTime?    @map("data_execucao")
-  criadoEm           DateTime     @default(now()) @map("criado_em")
-  investidor         Investidor   @relation(fields: [investidorId], references: [id], onDelete: Cascade)
-  investimento       Investimento @relation(fields: [investimentoId], references: [id], onDelete: Cascade)
-  pagamento          Pagamento    @relation(fields: [pagamentoId], references: [id], onDelete: Cascade)
+  id                 String            @id @default(uuid())
+  pagamentoId        String            @map("pagamento_id")
+  investimentoId     String            @map("investimento_id")
+  investidorId       String            @map("investidor_id")
+  connectedAccountId String?           @map("connected_account_id") // link para Stripe Connect
+  valorRepasse       Decimal           @map("valor_repasse") @db.Decimal(15, 2)
+  principalDevolvido Decimal?          @map("principal_devolvido") @db.Decimal(15, 2)
+  retornoBruto       Decimal?          @map("retorno_bruto") @db.Decimal(15, 2)
+  status             String            @default("PENDENTE")
+  dataExecucao       DateTime?         @map("data_execucao")
+  criadoEm           DateTime          @default(now()) @map("criado_em")
+  investidor         Investidor        @relation(fields: [investidorId], references: [id], onDelete: Cascade)
+  investimento       Investimento      @relation(fields: [investimentoId], references: [id], onDelete: Cascade)
+  pagamento          Pagamento         @relation(fields: [pagamentoId], references: [id], onDelete: Cascade)
+  connectedAccount   ConnectedAccount? @relation(fields: [connectedAccountId], references: [id])
+  logs               RepasseLog[]
 
   @@index([pagamentoId])
   @@index([investidorId, dataExecucao(sort: Desc)])
@@ -547,35 +550,35 @@ model Verification {
 }
 
 model Wallet {
-  id                      String               @id @default(uuid())
-  uidUsuario              String               @unique @map("uid_usuario")
-  saldoAtual              Decimal              @default(0) @map("saldo_atual") @db.Decimal(15, 2)
-  disponivelSaque         Decimal              @default(0) @map("disponivel_saque") @db.Decimal(15, 2)
-  valorBloqueado          Decimal              @default(0) @map("valor_bloqueado") @db.Decimal(15, 2)
-  criadoEm                DateTime             @default(now()) @map("criado_em")
-  atualizadoEm            DateTime             @default(now()) @updatedAt @map("atualizado_em")
-  
-  transacoes              WalletTransaction[]
-  
+  id              String   @id @default(uuid())
+  uidUsuario      String   @unique @map("uid_usuario")
+  saldoAtual      Decimal  @default(0) @map("saldo_atual") @db.Decimal(15, 2)
+  disponivelSaque Decimal  @default(0) @map("disponivel_saque") @db.Decimal(15, 2)
+  valorBloqueado  Decimal  @default(0) @map("valor_bloqueado") @db.Decimal(15, 2)
+  criadoEm        DateTime @default(now()) @map("criado_em")
+  atualizadoEm    DateTime @default(now()) @updatedAt @map("atualizado_em")
+
+  transacoes WalletTransaction[]
+
   @@index([uidUsuario])
   @@map("carteiras")
 }
 
 model WalletTransaction {
-  id          String                    @id @default(uuid())
-  carteiraId  String                    @map("carteira_id")
-  uidUsuario  String                    @map("uid_usuario")
-  tipo        WalletTransactionType
-  valor       Decimal                   @db.Decimal(15, 2)
-  descricao   String
-  status      WalletTransactionStatus   @default(PENDING)
-  referencia  String?                   // PIX transaction ID or external reference
-  metadata    Json?                     // Additional transaction data
-  criadoEm    DateTime                  @default(now()) @map("criado_em")
-  processadoEm DateTime?                @map("processado_em")
-  
+  id           String                  @id @default(uuid())
+  carteiraId   String                  @map("carteira_id")
+  uidUsuario   String                  @map("uid_usuario")
+  tipo         WalletTransactionType
+  valor        Decimal                 @db.Decimal(15, 2)
+  descricao    String
+  status       WalletTransactionStatus @default(PENDING)
+  referencia   String? // PIX transaction ID or external reference
+  metadata     Json? // Additional transaction data
+  criadoEm     DateTime                @default(now()) @map("criado_em")
+  processadoEm DateTime?               @map("processado_em")
+
   carteira Wallet @relation(fields: [carteiraId], references: [id], onDelete: Cascade)
-  
+
   @@index([uidUsuario])
   @@index([carteiraId])
   @@index([status])
@@ -597,4 +600,146 @@ enum WalletTransactionStatus {
   COMPLETED
   FAILED
   CANCELLED
+}
+
+// Stripe Connect Integration Models
+model ConnectedAccount {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id") // referência ao usuário (tomador)
+  stripeUserId String   @unique @map("stripe_user_id")
+  scope        String // 'read_only' ou 'read_write'
+  accessToken  String   @map("access_token") // encrypted
+  refreshToken String?  @map("refresh_token") // encrypted
+  livemode     Boolean  @default(false)
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
+
+  repasses Repasse[]
+
+  @@map("connected_accounts")
+}
+
+model RepasseLog {
+  id                    String    @id @default(uuid())
+  repasseId             String    @map("repasse_id")
+  connectedAccountId    String?   @map("connected_account_id") // novo campo para Stripe Connect
+  smartContractId       String?   @map("smart_contract_id") // referência ao smart contract
+  stripePaymentIntentId String?   @map("stripe_payment_intent_id")
+  stripeTransferId      String?   @map("stripe_transfer_id")
+  smartContractTxHash   String?   @map("smart_contract_tx_hash")
+  status                String    @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED
+  amount                Decimal   @db.Decimal(15, 2)
+  currency              String    @default("BRL")
+  paymentMethod         String?   @map("payment_method") // "destination_charge" ou "transfer"
+  processedAt           DateTime? @map("processed_at")
+  confirmedAt           DateTime? @map("confirmed_at")
+  metadata              Json? // dados extras do webhook ou contrato
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  repasse          Repasse                 @relation(fields: [repasseId], references: [id])
+  connectedAccount StripeConnectedAccount? @relation(fields: [connectedAccountId], references: [id])
+  smartContract    SmartContract?          @relation(fields: [smartContractId], references: [id])
+
+  @@index([smartContractId, status])
+  @@index([connectedAccountId])
+  @@map("repasse_logs")
+}
+
+// Smart Contract Models
+model SmartContract {
+  id              String   @id @default(uuid())
+  contractAddress String   @unique @map("contract_address")
+  networkId       String   @map("network_id") // 'mainnet', 'goerli', 'sepolia'
+  deployTxHash    String   @map("deploy_tx_hash")
+  tomadorId       String   @map("tomador_id")
+  totalAmount     Decimal  @map("total_amount") @db.Decimal(15, 2)
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  investorSignatures InvestorSignature[]
+  repasseLogs        RepasseLog[]
+
+  @@map("smart_contracts")
+}
+
+model InvestorSignature {
+  id              String   @id @default(uuid())
+  contractId      String   @map("contract_id")
+  investorId      String   @map("investor_id")
+  walletAddress   String   @map("wallet_address")
+  signatureTxHash String   @map("signature_tx_hash")
+  amount          Decimal  @db.Decimal(15, 2)
+  percentage      Decimal  @db.Decimal(5, 4) // ex: 15.25% = 0.1525
+  signedAt        DateTime @default(now()) @map("signed_at")
+
+  contract SmartContract @relation(fields: [contractId], references: [id])
+
+  @@unique([contractId, investorId])
+  @@map("investor_signatures")
+}
+
+// Stripe Connect Models
+model StripeConnectedAccount {
+  id               String    @id @default(uuid())
+  userId           String    @map("user_id") // referencia ao tomador ou investidor
+  userType         String    @map("user_type") // "TOMADOR" ou "INVESTIDOR"
+  stripeUserId     String    @unique @map("stripe_user_id")
+  scope            String // "read_only" ou "read_write"
+  accessToken      String    @map("access_token") // criptografado
+  refreshToken     String?   @map("refresh_token") // criptografado
+  livemode         Boolean   @default(false)
+  capabilities     Json? // capabilities habilitadas na conta
+  chargesEnabled   Boolean   @default(false) @map("charges_enabled")
+  transfersEnabled Boolean   @default(false) @map("transfers_enabled")
+  connectedAt      DateTime  @default(now()) @map("connected_at")
+  lastSyncAt       DateTime? @map("last_sync_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  repasseLogs    RepasseLog[]
+  monitoringData StripeMonitoringData[]
+
+  @@index([userId, userType])
+  @@index([stripeUserId])
+  @@map("stripe_connected_accounts")
+}
+
+model StripeMonitoringData {
+  id                 String   @id @default(uuid())
+  connectedAccountId String   @map("connected_account_id")
+  period             DateTime @db.Date
+  mrr                Decimal? @db.Decimal(15, 2)
+  churnRate          Decimal? @map("churn_rate") @db.Decimal(5, 4)
+  newCustomers       Int?     @map("new_customers")
+  totalCharges       Decimal? @map("total_charges") @db.Decimal(15, 2)
+  totalRefunds       Decimal? @map("total_refunds") @db.Decimal(15, 2)
+  disputesCount      Int?     @map("disputes_count")
+  rawData            Json?    @map("raw_data") // dados brutos da Stripe para auditoria
+  collectedAt        DateTime @default(now()) @map("collected_at")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  connectedAccount StripeConnectedAccount @relation(fields: [connectedAccountId], references: [id])
+
+  @@unique([connectedAccountId, period])
+  @@index([connectedAccountId, period(sort: Desc)])
+  @@map("stripe_monitoring_data")
+}
+
+model StripeWebhookEvent {
+  id            String    @id @default(uuid())
+  stripeEventId String    @unique @map("stripe_event_id")
+  eventType     String    @map("event_type")
+  processed     Boolean   @default(false)
+  processedAt   DateTime? @map("processed_at")
+  attempts      Int       @default(0)
+  lastAttemptAt DateTime? @map("last_attempt_at")
+  errorMessage  String?   @map("error_message")
+  eventData     Json      @map("event_data")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  @@index([eventType, processed])
+  @@index([stripeEventId])
+  @@map("stripe_webhook_events")
 }
