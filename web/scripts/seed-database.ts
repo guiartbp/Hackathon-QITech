@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from '../src/generated/prisma'
 import { faker } from '@faker-js/faker'
 import { Decimal } from '@prisma/client/runtime/library';
 
@@ -125,11 +125,11 @@ async function seedInvestidores() {
   for (const investidorData of INVESTIDORES_MOCK) {
     const investidor = await prisma.investidor.create({
       data: {
-        uidUsuario: faker.datatype.uuid(),
+        uidUsuario: faker.string.uuid(),
         tipoPessoa: investidorData.tipoPessoa,
         documentoIdentificacao: investidorData.tipoPessoa === 'PF' ? generateCPF() : generateCNPJ(),
         nomeRazaoSocial: investidorData.nome,
-        patrimonioLiquido: new Decimal(faker.datatype.number({ min: 100000, max: 10000000 })),
+        patrimonioLiquido: new Decimal(faker.number.int({ min: 100000, max: 10000000 })),
         declaracaoRisco: faker.datatype.boolean(),
         experienciaAtivosRisco: faker.datatype.boolean(),
         modeloInvestimento: investidorData.modeloInvestimento,
@@ -151,8 +151,8 @@ async function seedTomadoresEEmpresas() {
     // Criar tomador
     const tomador = await prisma.tomador.create({
       data: {
-        uidUsuario: faker.datatype.uuid(),
-        nomeCompleto: faker.name.fullName(),
+        uidUsuario: faker.string.uuid(),
+        nomeCompleto: faker.person.fullName(),
         email: faker.internet.email(),
         cargo: faker.helpers.arrayElement(['CEO', 'CTO', 'Fundador', 'Cofundador']),
         statusCompliance: faker.helpers.arrayElement(['PENDENTE', 'APROVADO']),
@@ -174,7 +174,7 @@ async function seedTomadoresEEmpresas() {
         descricaoCompleta: faker.lorem.paragraph(3),
         produto: empresaData.produto,
         dataFundacao: faker.date.past(5),
-        numeroFuncionarios: faker.datatype.number({ min: 5, max: 500 }),
+        numeroFuncionarios: faker.number.int({ min: 5, max: 500 }),
         emoji: empresaData.emoji,
       }
     });
@@ -195,8 +195,8 @@ async function seedMetricasEHistorico(empresas: any[]) {
       mesReferencia.setMonth(mesReferencia.getMonth() - i);
       mesReferencia.setDate(1);
 
-      const baseMrr = faker.datatype.number({ min: 50000, max: 500000 });
-      const growth = 1 + (faker.datatype.number({ min: 0, max: 20 }) / 100); // 0-20% growth
+      const baseMrr = faker.number.int({ min: 50000, max: 500000 });
+      const growth = 1 + (faker.number.int({ min: 0, max: 20 }) / 100); // 0-20% growth
       const mrr = new Decimal(baseMrr * Math.pow(growth, i / 12));
 
       await prisma.metricasMensais.create({
@@ -206,31 +206,31 @@ async function seedMetricasEHistorico(empresas: any[]) {
           mrrFinal: mrr,
           mrrMedio: mrr.mul(0.95),
           arrFinal: mrr.mul(12),
-          nrrMensal: new Decimal(faker.datatype.number({ min: 95, max: 115 })),
-          numClientesInicio: faker.datatype.number({ min: 100, max: 1000 }),
-          numClientesFinal: faker.datatype.number({ min: 100, max: 1000 }),
-          novosClientes: faker.datatype.number({ min: 10, max: 100 }),
-          clientesCancelados: faker.datatype.number({ min: 5, max: 50 }),
-          ticketMedio: mrr.div(faker.datatype.number({ min: 100, max: 1000 })),
-          churnRateMedio: new Decimal(faker.datatype.number({ min: 2, max: 8 }) / 100),
-          opexMensal: mrr.mul(faker.datatype.number({ min: 60, max: 120 }) / 100),
+          nrrMensal: new Decimal(faker.number.int({ min: 95, max: 115 })),
+          numClientesInicio: faker.number.int({ min: 100, max: 1000 }),
+          numClientesFinal: faker.number.int({ min: 100, max: 1000 }),
+          novosClientes: faker.number.int({ min: 10, max: 100 }),
+          clientesCancelados: faker.number.int({ min: 5, max: 50 }),
+          ticketMedio: mrr.div(faker.number.int({ min: 100, max: 1000 })),
+          churnRateMedio: new Decimal(faker.number.int({ min: 2, max: 8 }) / 100),
+          opexMensal: mrr.mul(faker.number.int({ min: 60, max: 120 }) / 100),
         }
       });
     }
 
     // Métricas em tempo real
-    const mrrAtual = faker.datatype.number({ min: 50000, max: 500000 });
+    const mrrAtual = faker.number.int({ min: 50000, max: 500000 });
     await prisma.metricasTempoReal.create({
       data: {
         empresaId: empresa.id,
         mrr: new Decimal(mrrAtual),
         arr: new Decimal(mrrAtual * 12),
-        nrr: new Decimal(faker.datatype.number({ min: 95, max: 120 })),
-        usuariosAtivos: faker.datatype.number({ min: 1000, max: 10000 }),
-        churnRate: new Decimal(faker.datatype.number({ min: 2, max: 8 }) / 100),
-        opexMensal: new Decimal(mrrAtual * (faker.datatype.number({ min: 60, max: 120 }) / 100)),
-        ltvCacAjustado: new Decimal(faker.datatype.number({ min: 3, max: 10 })),
-        dscrAjustado: new Decimal(faker.datatype.number({ min: 1.2, max: 3 })),
+        nrr: new Decimal(faker.number.int({ min: 95, max: 120 })),
+        usuariosAtivos: faker.number.int({ min: 1000, max: 10000 }),
+        churnRate: new Decimal(faker.number.int({ min: 2, max: 8 }) / 100),
+        opexMensal: new Decimal(mrrAtual * (faker.number.int({ min: 60, max: 120 }) / 100)),
+        ltvCacAjustado: new Decimal(faker.number.int({ min: 3, max: 10 })),
+        dscrAjustado: new Decimal(faker.number.int({ min: 1.2, max: 3 })),
       }
     });
 
@@ -244,8 +244,8 @@ async function seedMetricasEHistorico(empresas: any[]) {
           clienteNome: cliente.nome,
           clienteEmoji: cliente.emoji,
           plano: faker.helpers.arrayElement(PLANOS_MOCK),
-          mrrCliente: new Decimal(faker.datatype.number({ min: 1000, max: 50000 })),
-          percentualMrrTotal: new Decimal(faker.datatype.number({ min: 5, max: 25 })),
+          mrrCliente: new Decimal(faker.number.int({ min: 1000, max: 50000 })),
+          percentualMrrTotal: new Decimal(faker.number.int({ min: 5, max: 25 })),
         }
       });
     }
@@ -257,9 +257,9 @@ async function seedMetricasEHistorico(empresas: any[]) {
           empresaId: empresa.id,
           mesReferencia: new Date(),
           nomePlano: plano,
-          mrrPlano: new Decimal(faker.datatype.number({ min: 10000, max: 200000 })),
-          numClientesPlano: faker.datatype.number({ min: 50, max: 500 }),
-          percentualTotal: new Decimal(faker.datatype.number({ min: 15, max: 40 })),
+          mrrPlano: new Decimal(faker.number.int({ min: 10000, max: 200000 })),
+          numClientesPlano: faker.number.int({ min: 50, max: 500 }),
+          percentualTotal: new Decimal(faker.number.int({ min: 15, max: 40 })),
         }
       });
     }
@@ -274,26 +274,26 @@ async function seedMetricasEHistorico(empresas: any[]) {
         data: {
           empresaId: empresa.id,
           cohortMes,
-          clientesIniciais: faker.datatype.number({ min: 50, max: 200 }),
-          retencaoM1: new Decimal(faker.datatype.number({ min: 85, max: 95 })),
-          retencaoM2: new Decimal(faker.datatype.number({ min: 75, max: 90 })),
-          retencaoM3: new Decimal(faker.datatype.number({ min: 70, max: 85 })),
-          retencaoM6: new Decimal(faker.datatype.number({ min: 60, max: 80 })),
-          retencaoM12: new Decimal(faker.datatype.number({ min: 50, max: 75 })),
-          ltvMedio: new Decimal(faker.datatype.number({ min: 1000, max: 10000 })),
+          clientesIniciais: faker.number.int({ min: 50, max: 200 }),
+          retencaoM1: new Decimal(faker.number.int({ min: 85, max: 95 })),
+          retencaoM2: new Decimal(faker.number.int({ min: 75, max: 90 })),
+          retencaoM3: new Decimal(faker.number.int({ min: 70, max: 85 })),
+          retencaoM6: new Decimal(faker.number.int({ min: 60, max: 80 })),
+          retencaoM12: new Decimal(faker.number.int({ min: 50, max: 75 })),
+          ltvMedio: new Decimal(faker.number.int({ min: 1000, max: 10000 })),
         }
       });
     }
 
     // Score
-    const scoreTotal = faker.datatype.number({ min: 300, max: 850 });
+    const scoreTotal = faker.number.int({ min: 300, max: 850 });
     const score = await prisma.score.create({
       data: {
         empresaId: empresa.id,
         scoreTotal,
         tier: scoreTotal >= 750 ? 'A' : scoreTotal >= 650 ? 'B' : scoreTotal >= 500 ? 'C' : 'D',
-        variacaoMensal: faker.datatype.number({ min: -50, max: 50 }),
-        rankingPercentil: faker.datatype.number({ min: 10, max: 90 }),
+        variacaoMensal: faker.number.int({ min: -50, max: 50 }),
+        rankingPercentil: faker.number.int({ min: 10, max: 90 }),
         tipoScore: 'GERAL',
         metodo: 'ML_ENHANCED',
       }
@@ -306,7 +306,7 @@ async function seedMetricasEHistorico(empresas: any[]) {
         data: {
           scoreId: score.id,
           categoria,
-          scoreCategoria: faker.datatype.number({ min: 50, max: 100 }),
+          scoreCategoria: faker.number.int({ min: 50, max: 100 }),
         }
       });
     }
@@ -337,31 +337,31 @@ async function seedPropostasEInvestimentos(empresas: any[], investidores: any[])
   console.log('🔸 Criando propostas e investimentos...');
   
   for (const { empresa } of empresas.slice(0, 3)) { // Apenas 3 empresas com propostas ativas
-    const valorSolicitado = faker.datatype.number({ min: 500000, max: 5000000 });
+    const valorSolicitado = faker.number.int({ min: 500000, max: 5000000 });
     
     const proposta = await prisma.proposta.create({
       data: {
         empresaId: empresa.id,
         valorSolicitado: new Decimal(valorSolicitado),
-        multiploCap: new Decimal(faker.datatype.number({ min: 120, max: 300 }) / 100),
-        percentualMrr: new Decimal(faker.datatype.number({ min: 8, max: 25 })),
-        duracaoMeses: faker.datatype.number({ min: 12, max: 36 }),
+        multiploCap: new Decimal(faker.number.int({ min: 120, max: 300 }) / 100),
+        percentualMrr: new Decimal(faker.number.int({ min: 8, max: 25 })),
+        duracaoMeses: faker.number.int({ min: 12, max: 36 }),
         valorMinimoFunding: new Decimal(valorSolicitado * 0.3),
         planoUsoFundos: 'Expansão da equipe de vendas e marketing',
         statusFunding: faker.helpers.arrayElement(['ATIVA', 'FINANCIADA', 'FECHADA']),
-        valorFinanciado: new Decimal(faker.datatype.number({ min: valorSolicitado * 0.5, max: valorSolicitado })),
-        progressoFunding: new Decimal(faker.datatype.number({ min: 30, max: 100 })),
+        valorFinanciado: new Decimal(faker.number.int({ min: valorSolicitado * 0.5, max: valorSolicitado })),
+        progressoFunding: new Decimal(faker.number.int({ min: 30, max: 100 })),
         dataAbertura: faker.date.past(2),
-        scoreNaAbertura: faker.datatype.number({ min: 650, max: 800 }),
+        scoreNaAbertura: faker.number.int({ min: 650, max: 800 }),
       }
     });
 
     // Criar investimentos para a proposta
-    const numInvestidores = faker.datatype.number({ min: 2, max: 5 });
+    const numInvestidores = faker.number.int({ min: 2, max: 5 });
     const investidoresSelecionados = faker.helpers.shuffle(investidores).slice(0, numInvestidores);
     
     for (const investidor of investidoresSelecionados) {
-      const valorAportado = faker.datatype.number({ min: 50000, max: 1000000 });
+      const valorAportado = faker.number.int({ min: 50000, max: 1000000 });
       
       await prisma.investimento.create({
         data: {
@@ -370,8 +370,8 @@ async function seedPropostasEInvestimentos(empresas: any[], investidores: any[])
           valorAportado: new Decimal(valorAportado),
           percentualParticipacao: new Decimal(valorAportado / valorSolicitado * 100),
           statusInvestimento: faker.helpers.arrayElement(['CONFIRMADO', 'PENDENTE']),
-          valorTotalRecebido: new Decimal(faker.datatype.number({ min: 0, max: valorAportado * 1.5 })),
-          tirRealizado: new Decimal(faker.datatype.number({ min: 8, max: 35 })),
+          valorTotalRecebido: new Decimal(faker.number.int({ min: 0, max: valorAportado * 1.5 })),
+          tirRealizado: new Decimal(faker.number.int({ min: 8, max: 35 })),
         }
       });
     }
@@ -399,9 +399,9 @@ async function seedContratosEPagamentos(empresas: any[], investidores: any[]) {
         dataInicio: new Date(),
         dataFimPrevista: new Date(Date.now() + proposta.duracaoMeses * 30 * 24 * 60 * 60 * 1000),
         statusContrato: 'ATIVO',
-        valorTotalPago: new Decimal(faker.datatype.number({ min: 0, max: Number(proposta.valorFinanciado) * 0.3 })),
-        percentualPago: new Decimal(faker.datatype.number({ min: 0, max: 30 })),
-        multiploAtingido: new Decimal(faker.datatype.number({ min: 100, max: 130 }) / 100),
+        valorTotalPago: new Decimal(faker.number.int({ min: 0, max: Number(proposta.valorFinanciado) * 0.3 })),
+        percentualPago: new Decimal(faker.number.int({ min: 0, max: 30 })),
+        multiploAtingido: new Decimal(faker.number.int({ min: 100, max: 130 }) / 100),
       }
     });
 
@@ -410,18 +410,18 @@ async function seedContratosEPagamentos(empresas: any[], investidores: any[]) {
       const dataVencimento = new Date();
       dataVencimento.setMonth(dataVencimento.getMonth() + i);
       
-      const isPago = i < faker.datatype.number({ min: 0, max: 6 });
+      const isPago = i < faker.number.int({ min: 0, max: 6 });
       
       const pagamento = await prisma.pagamento.create({
         data: {
           contratoId: contrato.id,
           tipoPagamento: 'MENSAL',
           dataVencimento,
-          dataPagamento: isPago ? new Date(dataVencimento.getTime() + faker.datatype.number({ min: 0, max: 5 }) * 24 * 60 * 60 * 1000) : null,
-          diasAtraso: isPago ? faker.datatype.number({ min: 0, max: 3 }) : 0,
-          mrrPeriodo: new Decimal(faker.datatype.number({ min: 80000, max: 200000 })),
-          valorEsperado: new Decimal(faker.datatype.number({ min: 15000, max: 50000 })),
-          valorPago: isPago ? new Decimal(faker.datatype.number({ min: 15000, max: 50000 })) : null,
+          dataPagamento: isPago ? new Date(dataVencimento.getTime() + faker.number.int({ min: 0, max: 5 }) * 24 * 60 * 60 * 1000) : null,
+          diasAtraso: isPago ? faker.number.int({ min: 0, max: 3 }) : 0,
+          mrrPeriodo: new Decimal(faker.number.int({ min: 80000, max: 200000 })),
+          valorEsperado: new Decimal(faker.number.int({ min: 15000, max: 50000 })),
+          valorPago: isPago ? new Decimal(faker.number.int({ min: 15000, max: 50000 })) : null,
           status: isPago ? 'PAGO' : i === 0 ? 'PENDENTE' : 'AGENDADO',
         }
       });
@@ -475,14 +475,14 @@ async function seedWallets() {
     const wallet = await prisma.wallet.create({
       data: {
         uidUsuario: investidor.uidUsuario,
-        saldoAtual: new Decimal(faker.datatype.number({ min: 1000, max: 100000 })),
-        disponivelSaque: new Decimal(faker.datatype.number({ min: 500, max: 50000 })),
-        valorBloqueado: new Decimal(faker.datatype.number({ min: 0, max: 10000 })),
+        saldoAtual: new Decimal(faker.number.int({ min: 1000, max: 100000 })),
+        disponivelSaque: new Decimal(faker.number.int({ min: 500, max: 50000 })),
+        valorBloqueado: new Decimal(faker.number.int({ min: 0, max: 10000 })),
       }
     });
 
     // Criar algumas transações
-    const numTransactions = faker.datatype.number({ min: 5, max: 15 });
+    const numTransactions = faker.number.int({ min: 5, max: 15 });
     
     for (let i = 0; i < numTransactions; i++) {
       await prisma.walletTransaction.create({
@@ -490,10 +490,10 @@ async function seedWallets() {
           carteiraId: wallet.id,
           uidUsuario: investidor.uidUsuario,
           tipo: faker.helpers.arrayElement(['DEPOSIT', 'WITHDRAWAL', 'INVESTMENT', 'RETURN', 'PIX_DEPOSIT']),
-          valor: new Decimal(faker.datatype.number({ min: 100, max: 10000 })),
+          valor: new Decimal(faker.number.int({ min: 100, max: 10000 })),
           descricao: faker.lorem.sentence(),
           status: faker.helpers.arrayElement(['COMPLETED', 'PENDING', 'FAILED']),
-          referencia: faker.datatype.uuid(),
+          referencia: faker.string.uuid(),
           processadoEm: faker.datatype.boolean() ? faker.date.past(1) : null,
         }
       });

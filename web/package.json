@@ -15,7 +15,9 @@
     "start": "next start",
     "postinstall": "prisma generate",
     "db:seed": "tsx scripts/seed-database.ts",
-    "db:reset": "prisma db push --force-reset && pnpm db:seed"
+    "db:seed:large": "tsx scripts/seed-large-database.ts",
+    "db:reset": "prisma db push --force-reset && pnpm db:seed",
+    "db:reset:large": "prisma db push --force-reset && pnpm db:seed:large"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.9.0",
