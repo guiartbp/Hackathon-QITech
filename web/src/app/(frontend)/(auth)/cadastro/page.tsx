@@ -11,6 +11,10 @@ export default function CadastroPage() {
 
   const isInvestor = userType === 'investor';
 
+  const handleUserTypeChange = (newUserType: UserType) => {
+    setUserType(newUserType);
+  };
+
   const content = {
     investor: {
       title: "Potencialize seus retornos.",
@@ -41,35 +45,13 @@ export default function CadastroPage() {
           {!isInvestor && (
             <div className="absolute inset-0 z-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
           )}
-          {/* Toggle Button */}
-          <div className="relative z-10 w-full max-w-lg mb-8">
-            <div className="flex bg-gray-800 rounded-full p-1 w-fit mx-auto">
-              <button
-                onClick={() => setUserType('investor')}
-                className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
-                  isInvestor 
-                    ? 'bg-orange-600 text-white shadow-lg' 
-                    : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                Investidor
-              </button>
-              <button
-                onClick={() => setUserType('founder')}
-                className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
-                  !isInvestor 
-                    ? 'bg-black text-white shadow-lg' 
-                    : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                Founder
-              </button>
-            </div>
-          </div>
 
           {/* Form */}
           <div className="relative z-10 w-full max-w-lg">
-            <CadastroForm isDarkBackground={true} />
+            <CadastroForm 
+              isDarkBackground={true}
+              onUserTypeChange={handleUserTypeChange}
+            />
           </div>
         </div>
         

@@ -14,19 +14,28 @@ const GoogleAuthButton = dynamic(() => import('@/components/auth/GoogleLoginButt
 const CredentialsButton = dynamic(() => import('@/components/auth/CredentialsButton'));
 const ValidatedInput = dynamic(() => import('@/components/input/ValidatedInput'));
 
+type UserType = 'investor' | 'founder';
+
 interface CadastroFormProps {
   isDarkBackground?: boolean;
+  onUserTypeChange?: (userType: UserType) => void;
 }
 
-function CadastroForm({ isDarkBackground = true }: CadastroFormProps = {}) {
+function CadastroForm({ isDarkBackground = true, onUserTypeChange }: CadastroFormProps = {}) {
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [userType, setUserType] = useState<UserType>('investor');
 
   useEffect(() => {
     setLoading(false);
   }, []);
+
+  const handleUserTypeChange = (newUserType: UserType) => {
+    setUserType(newUserType);
+    onUserTypeChange?.(newUserType);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,6 +47,8 @@ function CadastroForm({ isDarkBackground = true }: CadastroFormProps = {}) {
         email,
         password,
         callbackURL: "/",
+        // Include userType in the signup data
+        ...(userType && { userType }),
       });
 
       if (result.error) {
@@ -52,6 +63,34 @@ function CadastroForm({ isDarkBackground = true }: CadastroFormProps = {}) {
 
   return ( 
     <div className="lg:w-[90%] xl:w-[80%]">
+      {/* User Type Toggle */}
+      <div className="mb-8">
+        <div className="flex bg-gray-800 rounded-full p-1 w-fit mx-auto">
+          <button
+            type="button"
+            onClick={() => handleUserTypeChange('investor')}
+            className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+              userType === 'investor'
+                ? 'bg-orange-600 text-white shadow-lg' 
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            Investidor
+          </button>
+          <button
+            type="button"
+            onClick={() => handleUserTypeChange('founder')}
+            className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+              userType === 'founder'
+                ? 'bg-black text-white shadow-lg' 
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            Founder
+          </button>
+        </div>
+      </div>
+
       <h2 className={`font-bold text-[40px] text-center leading-12 ${isDarkBackground ? 'text-white' : 'text-black'}`}>Cadastro</h2>
       <form className="mt-6" onSubmit={handleSubmit}>
         <ValidatedInput 

@@ -12,8 +12,8 @@ function LoginPage() {
   <Image
     src="/logo-will.png"
     alt="Will Logo"
-    width={600}
-    height={600}
+    width={1000}
+    height={1000}
     className="object-contain opacity-70"
   />
 </div>

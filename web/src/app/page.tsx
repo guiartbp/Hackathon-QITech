@@ -2,8 +2,8 @@
 
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { GradientDotsOrange } from '@/components/ui/gradient-dots-orange';
-import { TrendingUp, Shield, DollarSign, Users, Sparkles, Rocket, Target, BarChart3, Lock, Brain, CheckCircle } from 'lucide-react';
+
+import { TrendingUp, Shield, Rocket, Target, BarChart3, Lock, Brain, CheckCircle } from 'lucide-react';
 import Image from 'next/image';
 
 export default function HomePage() {
