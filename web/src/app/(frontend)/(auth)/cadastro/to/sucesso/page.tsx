@@ -31,14 +31,14 @@ export default function Sucesso() {
   useEffect(() => {
     // Verificar se chegou aqui corretamente
     if (!tomadorOnboardingStorage.validateStepAccess(5)) {
-      router.push('/to/dados-pessoais');
+      router.push('/cadastro/to/dados-pessoais');
       return;
     }
 
     // Verificar se completou o KYC
     const kycData = tomadorOnboardingStorage.getStep(4);
     if (!kycData) {
-      router.push('/to/kyc');
+      router.push('/cadastro/to/kyc');
       return;
     }
 
@@ -47,25 +47,53 @@ export default function Sucesso() {
     setDadosOnboarding(allData);
     setStripeConnected(allData.step3?.stripe_connected || false);
 
-    // Simular envio dos dados para API (em produção)
+    // Enviar dados para API
     const enviarDadosParaAPI = async () => {
       try {
-        // Mock: Em produção, enviaria todos os dados para backend
-        console.log('Enviando dados para API:', allData);
-        toast.success('Dados enviados com sucesso para análise!');
+        const response = await fetch('/api/onboarding/founder/complete', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            nome_completo: allData.step1?.nome_completo,
+            email: allData.step1?.email,
+            cargo: allData.step1?.cargo,
+            cnpj: allData.step2?.cnpj,
+            razao_social: allData.step2?.razao_social,
+            nome_fantasia: allData.step2?.nome_fantasia,
+            website: allData.step2?.website,
+            segmento: allData.step2?.segmento,
+            setor: allData.step2?.setor,
+            estagio_investimento: allData.step2?.estagio_investimento,
+            descricao_curta: allData.step2?.descricao_curta,
+            descricao_completa: allData.step2?.descricao_completa,
+            produto: allData.step2?.produto,
+            data_fundacao: allData.step2?.data_fundacao,
+            numero_funcionarios: allData.step2?.numero_funcionarios,
+            emoji: allData.step2?.emoji,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Erro ao salvar dados no banco');
+        }
+
+        toast.success('Dados salvos com sucesso no banco de dados!');
+
+        // Limpar dados do localStorage após sucesso
+        tomadorOnboardingStorage.clearAll();
       } catch (error) {
         console.error('Erro ao enviar dados:', error);
+        toast.error('Erro ao salvar dados. Por favor, contate o suporte.');
       }
     };
 
     enviarDadosParaAPI();
-
-    // Limpar dados do localStorage após sucesso (opcional)
-    // tomadorOnboardingStorage.clearAll();
   }, [router]);
 
   const handleVoltarStripe = () => {
-    router.push('/to/integracao-stripe');
+    router.push('/cadastro/to/integracao-stripe');
   };
 
   const handleIrDashboard = () => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,127 +11,186 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { formatCurrency, formatDate } from '@/lib/format';
 import { BarChart, Bar, ResponsiveContainer, XAxis, YAxis, Tooltip, Cell } from 'recharts';
 
+interface Empresa {
+  id: string;
+  razaoSocial: string;
+  nomeFantasia: string | null;
+  emoji: string | null;
+}
+
+interface Pagamento {
+  id: string;
+  contratoId: string;
+  dataVencimento: string;
+  dataPagamento: string | null;
+  valorPago: number | null;
+  mrrPeriodo: number | null;
+  taxaEfetiva: number | null;
+  status: string;
+  contrato: {
+    id: string;
+    empresaId: string;
+  };
+}
+
+interface ProjecaoPagamento {
+  id: string;
+  contratoId: string;
+  mesReferencia: string;
+  valorProjetado: number;
+  mrrProjetado: number | null;
+  contrato: {
+    id: string;
+    empresaId: string;
+  };
+}
+
+interface PagamentoComEmpresa {
+  id: string;
+  ativoId: string;
+  ativo: { nome: string; emoji: string };
+  data: string;
+  valor: number;
+  mrrPeriodo: number;
+  taxaEfetiva: number;
+  status: string;
+}
+
+interface ChartData {
+  mes: string;
+  valor: number;
+}
+
 export default function PortfolioPagamentos() {
   const navigate = useRouter();
   const [mesSelecionado, setMesSelecionado] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const pagamentosHistoricoData = [
-    { mes: 'Mar/24', valor: 245000 },
-    { mes: 'Abr/24', valor: 223000 },
-    { mes: 'Mai/24', valor: 189000 },
-    { mes: 'Jun/24', valor: 152000 },
-    { mes: 'Jul/24', valor: 267000 },
-    { mes: 'Ago/24', valor: 234000 },
-    { mes: 'Set/24', valor: 195000 },
-    { mes: 'Out/24', valor: 278025 }
-  ];
+  // Data states
+  const [pagamentosData, setPagamentosData] = useState<PagamentoComEmpresa[]>([]);
+  const [projecoesData, setProjecoesData] = useState<PagamentoComEmpresa[]>([]);
+  const [pagamentosHistoricoData, setPagamentosHistoricoData] = useState<ChartData[]>([]);
+  const [pagamentosProjecaoData, setPagamentosProjecaoData] = useState<ChartData[]>([]);
 
-  const pagamentosData = [
-    {
-      id: '1',
-      ativoId: '1',
-      ativo: { nome: 'AtaAI', emoji: '🤖' },
-      data: '2024-10-15',
-      valor: 5042,
-      mrrPeriodo: 183042,
-      taxaEfetiva: 3.5,
-      status: 'PAGO'
-    },
-    {
-      id: '2',
-      ativoId: '2',
-      ativo: { nome: 'Homodeus AI', emoji: '🧠' },
-      data: '2024-10-19',
-      valor: 2192,
-      mrrPeriodo: 35042,
-      taxaEfetiva: 6,
-      status: 'PAGO'
-    },
-    {
-      id: '3',
-      ativoId: '3',
-      ativo: { nome: 'TaskTracker', emoji: '📋' },
-      data: '2024-10-22',
-      valor: 10052,
-      mrrPeriodo: 300092,
-      taxaEfetiva: 3.3,
-      status: 'ATRASADO'
-    },
-    {
-      id: '4',
-      ativoId: '4',
-      ativo: { nome: 'Passei', emoji: '🎓' },
-      data: '2024-10-10',
-      valor: 8500,
-      mrrPeriodo: 250000,
-      taxaEfetiva: 3.4,
-      status: 'PAGO'
-    },
-    {
-      id: '5',
-      ativoId: '5',
-      ativo: { nome: 'ContratoAI', emoji: '📄' },
-      data: '2024-10-05',
-      valor: 450,
-      mrrPeriodo: 15000,
-      taxaEfetiva: 3.0,
-      status: 'PAGO'
-    }
-  ];
+  // Fetch data on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
 
-  const pagamentosProjecaoData = [
-    { mes: 'Nov/24', valor: 290000 },
-    { mes: 'Dez/24', valor: 305000 },
-    { mes: 'Jan/25', valor: 280000 },
-    { mes: 'Fev/25', valor: 315000 },
-    { mes: 'Mar/25', valor: 195000 },
-    { mes: 'Abr/25', valor: 245000 },
-    { mes: 'Mai/25', valor: 280000 },
-    { mes: 'Jun/25', valor: 330000 }
-  ];
+        // Fetch all data in parallel
+        const [pagamentosRes, projecoesRes, empresasRes] = await Promise.all([
+          fetch('/api/pagamentos'),
+          fetch('/api/projecoes-pagamento'),
+          fetch('/api/empresas'),
+        ]);
 
-  const projecoesData = [
-    {
-      id: '1',
-      ativoId: '1',
-      ativo: { nome: 'AtaAI', emoji: '🤖' },
-      data: '2024-11-15',
-      valor: 5200,
-      mrrPeriodo: 185000,
-      taxaEfetiva: 3.5,
-      status: 'AGUARDADO'
-    },
-    {
-      id: '2',
-      ativoId: '2',
-      ativo: { nome: 'Homodeus AI', emoji: '🧠' },
-      data: '2024-11-19',
-      valor: 2300,
-      mrrPeriodo: 36000,
-      taxaEfetiva: 6.0,
-      status: 'AGUARDADO'
-    },
-    {
-      id: '3',
-      ativoId: '3',
-      ativo: { nome: 'TaskTracker', emoji: '📋' },
-      data: '2024-11-22',
-      valor: 10500,
-      mrrPeriodo: 310000,
-      taxaEfetiva: 3.4,
-      status: 'AGUARDADO'
-    },
-    {
-      id: '4',
-      ativoId: '4',
-      ativo: { nome: 'Passei', emoji: '🎓' },
-      data: '2024-11-10',
-      valor: 8800,
-      mrrPeriodo: 255000,
-      taxaEfetiva: 3.5,
-      status: 'AGUARDADO'
-    }
-  ];
+        const pagamentos: Pagamento[] = await pagamentosRes.json();
+        const projecoes: ProjecaoPagamento[] = await projecoesRes.json();
+        const empresas: Empresa[] = await empresasRes.json();
+
+        // Create empresa lookup map
+        const empresaMap = new Map(empresas.map(e => [e.id, e]));
+
+        // Transform pagamentos with empresa data
+        const pagamentosComEmpresa: PagamentoComEmpresa[] = pagamentos.map(p => {
+          const empresa = empresaMap.get(p.contrato.empresaId);
+          return {
+            id: p.id,
+            ativoId: p.contrato.empresaId,
+            ativo: {
+              nome: empresa?.nomeFantasia || empresa?.razaoSocial || 'Empresa',
+              emoji: empresa?.emoji || '🏢'
+            },
+            data: p.dataPagamento || p.dataVencimento,
+            valor: p.valorPago ? Number(p.valorPago) : 0,
+            mrrPeriodo: p.mrrPeriodo ? Number(p.mrrPeriodo) : 0,
+            taxaEfetiva: p.taxaEfetiva ? Number(p.taxaEfetiva) : 0,
+            status: p.status
+          };
+        });
+
+        // Transform projecoes with empresa data
+        const projecoesComEmpresa: PagamentoComEmpresa[] = projecoes.map(p => {
+          const empresa = empresaMap.get(p.contrato.empresaId);
+          return {
+            id: p.id,
+            ativoId: p.contrato.empresaId,
+            ativo: {
+              nome: empresa?.nomeFantasia || empresa?.razaoSocial || 'Empresa',
+              emoji: empresa?.emoji || '🏢'
+            },
+            data: p.mesReferencia,
+            valor: Number(p.valorProjetado),
+            mrrPeriodo: p.mrrProjetado ? Number(p.mrrProjetado) : 0,
+            taxaEfetiva: 0, // Projeções não têm taxa efetiva
+            status: 'AGUARDADO'
+          };
+        });
+
+        // Aggregate pagamentos by month for chart
+        const pagamentosPorMes = pagamentos.reduce((acc, p) => {
+          const date = new Date(p.dataPagamento || p.dataVencimento);
+          const mes = date.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }).replace('.', '');
+          const mesKey = mes.charAt(0).toUpperCase() + mes.slice(1);
+
+          if (!acc[mesKey]) {
+            acc[mesKey] = 0;
+          }
+          acc[mesKey] += p.valorPago ? Number(p.valorPago) : 0;
+          return acc;
+        }, {} as Record<string, number>);
+
+        const historicoChart: ChartData[] = Object.entries(pagamentosPorMes).map(([mes, valor]) => ({
+          mes,
+          valor
+        }));
+
+        // Aggregate projecoes by month for chart
+        const projecoesPorMes = projecoes.reduce((acc, p) => {
+          const date = new Date(p.mesReferencia);
+          const mes = date.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }).replace('.', '');
+          const mesKey = mes.charAt(0).toUpperCase() + mes.slice(1);
+
+          if (!acc[mesKey]) {
+            acc[mesKey] = 0;
+          }
+          acc[mesKey] += Number(p.valorProjetado);
+          return acc;
+        }, {} as Record<string, number>);
+
+        const projecaoChart: ChartData[] = Object.entries(projecoesPorMes).map(([mes, valor]) => ({
+          mes,
+          valor
+        }));
+
+        // Update states
+        setPagamentosData(pagamentosComEmpresa);
+        setProjecoesData(projecoesComEmpresa);
+        setPagamentosHistoricoData(historicoChart);
+        setPagamentosProjecaoData(projecaoChart);
+      } catch (error) {
+        console.error('Error fetching pagamentos data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="p-8">
+          <h1 className="text-3xl font-bold text-white mb-8">Meus Pagamentos</h1>
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>

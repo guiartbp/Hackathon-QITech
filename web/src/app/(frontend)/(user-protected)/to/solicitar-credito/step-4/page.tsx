@@ -154,7 +154,7 @@ export default function Step4Page() {
             <Checkbox
               id="terms"
               checked={acceptTerms}
-              onCheckedChange={(checked) => setAcceptTerms(checked === true)}
+              onCheckedChange={(checked: boolean) => setAcceptTerms(checked === true)}
               className="mt-1"
             />
             <div className="flex-1">
@@ -178,7 +178,7 @@ export default function Step4Page() {
             <Checkbox
               id="privacy"
               checked={acceptPrivacy}
-              onCheckedChange={(checked) => setAcceptPrivacy(checked === true)}
+              onCheckedChange={(checked: boolean) => setAcceptPrivacy(checked === true)}
               className="mt-1"
             />
             <div className="flex-1">

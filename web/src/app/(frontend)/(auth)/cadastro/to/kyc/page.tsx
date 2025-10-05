@@ -22,7 +22,7 @@ export default function KYC() {
   // Proteção de rota
   useEffect(() => {
     if (!tomadorOnboardingStorage.validateStepAccess(4)) {
-      router.push('/to/dados-pessoais');
+      router.push('/cadastro/to/dados-pessoais');
       return;
     }
 
@@ -30,7 +30,7 @@ export default function KYC() {
     const saved = tomadorOnboardingStorage.getStep(4) as Step4Data;
     if (saved?.facial_verification) {
       toast.success('KYC já realizado!');
-      router.push('/to/sucesso');
+      router.push('/cadastro/to/sucesso');
     }
   }, [router]);
 
@@ -44,9 +44,9 @@ export default function KYC() {
     
     tomadorOnboardingStorage.saveStep(4, stepData);
     toast.success('Identidade verificada com sucesso! ✓');
-    
+
     // Navegar para tela de sucesso
-    router.push('/to/sucesso');
+    router.push('/cadastro/to/sucesso');
   };
 
   const handleError = (error: string) => {

@@ -35,7 +35,7 @@ export default function CadastroTermosConsentimento() {
   // Proteção de rota
   useEffect(() => {
     if (!onboardingStorage.validateStepAccess(6)) {
-      router.push('/cadastro/nome');
+      router.push('/cadastro/in/nome');
       return;
     }
 
@@ -76,8 +76,8 @@ export default function CadastroTermosConsentimento() {
 
     onboardingStorage.saveStep(6, data);
     toast.success('Termos aceitos com sucesso!');
-    
-    router.push('/cadastro/onboarding');
+
+    router.push('/cadastro/in/onboarding');
   };
 
   return (

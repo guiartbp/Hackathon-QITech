@@ -11,13 +11,31 @@ interface WizardData {
 
 interface SimulationData {
   valor_solicitado: number;
-  taxa_juros_mensal: number;
-  taxa_juros_anual: number;
-  prazo_meses: number;
-  valor_parcela: number;
-  valor_total: number;
+  taxa_juros_mensal?: number;
+  taxa_juros_anual?: number;
+  prazo_meses?: number;
+  valor_parcela?: number;
+  valor_total?: number;
   custo_total: number;
   primeira_parcela: string;
+  // Additional fields for the new structure
+  multiplo_cap?: number;
+  percentual_mrr?: number;
+  mrr_atual?: number;
+  valor_total_retorno?: number;
+  projecoes?: {
+    cenario: 'conservador' | 'base' | 'otimista';
+    crescimento_mrr_mensal: number;
+    prazo_estimado_meses: number;
+    cronograma: {
+      mes: number;
+      data: string;
+      mrr_projetado: number;
+      valor_parcela: number;
+      acumulado_pago: number;
+      saldo_restante: number;
+    }[];
+  }[];
 }
 
 interface ConfirmationSummaryProps {
@@ -36,6 +54,10 @@ const getPropositoLabel = (proposito: string) => {
 };
 
 export function ConfirmationSummary({ wizardData, simulation }: ConfirmationSummaryProps) {
+  // Get base scenario for display
+  const cenarioBase = simulation.projecoes?.find(p => p.cenario === 'base') || simulation.projecoes?.[0];
+  const mrrAtual = simulation.mrr_atual || 0;
+  
   return (
     <div className="space-y-6">
       {/* Request Summary */}
@@ -69,24 +91,24 @@ export function ConfirmationSummary({ wizardData, simulation }: ConfirmationSumm
         </CardContent>
       </Card>
 
-      {/* Payment Terms */}
+      {/* RBF Terms */}
       <Card>
         <CardHeader>
-          <CardTitle>Condições de Pagamento</CardTitle>
+          <CardTitle>Condições RBF (Revenue-Based Financing)</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="text-center p-4 bg-primary/5 rounded-lg">
-              <p className="text-sm text-muted-foreground mb-1">Parcela Mensal</p>
+              <p className="text-sm text-muted-foreground mb-1">% do MRR</p>
               <p className="text-2xl font-bold text-primary">
-                {formatCurrency(simulation.valor_parcela)}
+                {simulation.percentual_mrr ? `${simulation.percentual_mrr.toFixed(1)}%` : 'N/A'}
               </p>
             </div>
             
             <div className="text-center p-4 bg-purple-500/5 rounded-lg">
-              <p className="text-sm text-muted-foreground mb-1">Taxa Mensal</p>
+              <p className="text-sm text-muted-foreground mb-1">Múltiplo Cap</p>
               <p className="text-2xl font-bold text-purple-500">
-                {simulation.taxa_juros_mensal.toFixed(2)}%
+                {simulation.multiplo_cap ? `${simulation.multiplo_cap.toFixed(2)}x` : 'N/A'}
               </p>
             </div>
           </div>
@@ -95,14 +117,14 @@ export function ConfirmationSummary({ wizardData, simulation }: ConfirmationSumm
           
           <div className="space-y-3">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Prazo:</span>
-              <span className="font-semibold">{simulation.prazo_meses} meses</span>
+              <span className="text-muted-foreground">MRR Atual:</span>
+              <span className="font-semibold">{formatCurrency(mrrAtual)}</span>
             </div>
             
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Taxa Anual:</span>
+              <span className="text-muted-foreground">Prazo Estimado:</span>
               <Badge variant="outline" className="text-purple-500 border-purple-500/30">
-                {simulation.taxa_juros_anual.toFixed(2)}% a.a.
+                {cenarioBase ? `${cenarioBase.prazo_estimado_meses} meses` : 'N/A'}
               </Badge>
             </div>
             
@@ -114,15 +136,33 @@ export function ConfirmationSummary({ wizardData, simulation }: ConfirmationSumm
             <Separator />
             
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Valor dos Juros:</span>
+              <span className="text-muted-foreground">Custo do Financiamento:</span>
               <span className="font-semibold text-yellow-500">
                 {formatCurrency(simulation.custo_total)}
               </span>
             </div>
             
             <div className="flex justify-between text-lg">
-              <span className="font-semibold">Valor Total a Pagar:</span>
-              <span className="font-bold">{formatCurrency(simulation.valor_total)}</span>
+              <span className="font-semibold">Valor Total a Retornar:</span>
+              <span className="font-bold">{simulation.valor_total_retorno ? formatCurrency(simulation.valor_total_retorno) : formatCurrency(simulation.valor_total || 0)}</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* RBF Explanation */}
+      <Card className="bg-blue-500/5 border-blue-500/20">
+        <CardContent className="pt-6">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl">💡</span>
+            <div>
+              <h4 className="font-semibold mb-2">Como funciona o RBF</h4>
+              <ul className="text-sm text-muted-foreground space-y-1">
+                <li>• Você paga um percentual fixo da sua receita mensal (MRR)</li>
+                <li>• O pagamento se ajusta automaticamente ao seu faturamento</li>
+                <li>• Não há juros compostos, apenas um múltiplo do valor investido</li>
+                <li>• Meses com menor receita = parcelas menores</li>
+              </ul>
             </div>
           </div>
         </CardContent>

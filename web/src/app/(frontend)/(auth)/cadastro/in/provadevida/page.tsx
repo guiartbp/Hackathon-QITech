@@ -14,7 +14,7 @@ export default function CadastroProvaDeVida() {
   // Proteção de rota
   useEffect(() => {
     if (!onboardingStorage.validateStepAccess(4)) {
-      router.push('/cadastro/nome');
+      router.push('/cadastro/in/nome');
       return;
     }
     
@@ -24,7 +24,7 @@ export default function CadastroProvaDeVida() {
   const handleSuccess = (data: { image: string; confidence: number }) => {
     onboardingStorage.saveStep(4, data);
     toast.success('Verificação facial concluída!');
-    router.push('/cadastro/perfil_investidor');
+    router.push('/cadastro/in/perfil_investidor');
   };
 
   const handleError = (error: string) => {

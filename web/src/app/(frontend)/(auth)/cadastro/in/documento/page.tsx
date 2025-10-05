@@ -27,7 +27,7 @@ export default function CadastroDocumento() {
   // Proteção de rota e carregamento de dados
   useEffect(() => {
     if (!onboardingStorage.validateStepAccess(3)) {
-      router.push('/cadastro/nome');
+      router.push('/cadastro/in/nome');
       return;
     }
 
@@ -73,7 +73,7 @@ export default function CadastroDocumento() {
     toast.success('Documento validado com sucesso!');
     
     // Navegar
-    router.push('/cadastro/provadevida');
+    router.push('/cadastro/in/provadevida');
   };
 
   return (

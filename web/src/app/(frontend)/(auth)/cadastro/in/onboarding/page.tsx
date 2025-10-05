@@ -22,7 +22,7 @@ export default function CadastroOnboarding() {
   // Proteção de rota
   useEffect(() => {
     if (!onboardingStorage.validateStepAccess(7)) {
-      router.push('/cadastro/nome');
+      router.push('/cadastro/in/nome');
       return;
     }
 
@@ -50,23 +50,26 @@ export default function CadastroOnboarding() {
 
       // Coletar todos os dados do onboarding
       const allData = onboardingStorage.getAllSteps();
-      const finalData = {
-        ...allData,
-        data_cadastro: new Date().toISOString(),
-        status: 'pendente_aprovacao'
-      };
 
-      // Simular chamada para API
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Enviar para API
+      const response = await fetch('/api/onboarding/investor/complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tipo_pessoa: allData.step1?.tipo_pessoa,
+          nome_razao_social: allData.step1?.nome_razao_social,
+          documento_identificacao: allData.step3?.documento_identificacao,
+          patrimonio_liquido: allData.step5?.patrimonio_liquido,
+          declaracao_risco: allData.step5?.declaracao_risco,
+          experiencia_ativos_risco: allData.step5?.experiencia_ativos_risco,
+          modelo_investimento: estrategia, // Use selected strategy
+          fonte_recursos: null, // Can be added to form if needed
+        }),
+      });
 
-      // TODO: Enviar para API real
-      // await fetch('/api/investidores/cadastro', { 
-      //   method: 'POST', 
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(finalData) 
-      // });
-
-      console.log('Dados finais do onboarding:', finalData);
+      if (!response.ok) {
+        throw new Error('Erro ao salvar dados no banco');
+      }
 
       toast.success('Cadastro enviado com sucesso! 🎉');
 
@@ -75,9 +78,9 @@ export default function CadastroOnboarding() {
 
       // Redirecionar baseado na estratégia
       if (estrategia === 'ia') {
-        router.push('/cadastro/sucesso?strategy=ia');
+        router.push('/cadastro/in/sucesso?strategy=ia');
       } else {
-        router.push('/cadastro/sucesso?strategy=picking');
+        router.push('/cadastro/in/sucesso?strategy=picking');
       }
 
     } catch (error) {

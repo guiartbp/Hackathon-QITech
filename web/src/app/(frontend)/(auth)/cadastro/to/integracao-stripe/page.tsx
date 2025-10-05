@@ -24,7 +24,7 @@ export default function IntegracaoStripe() {
   // Proteção de rota
   useEffect(() => {
     if (!tomadorOnboardingStorage.validateStepAccess(3)) {
-      router.push('/to/dados-pessoais');
+      router.push('/cadastro/to/dados-pessoais');
       return;
     }
 
@@ -32,7 +32,7 @@ export default function IntegracaoStripe() {
     const saved = tomadorOnboardingStorage.getStep(3) as Step3Data;
     if (saved?.stripe_connected) {
       toast.success('Stripe já conectado!');
-      router.push('/to/kyc');
+      router.push('/cadastro/to/kyc');
     }
   }, [router]);
 
@@ -58,9 +58,9 @@ export default function IntegracaoStripe() {
       tomadorOnboardingStorage.saveStep(3, mockData);
       
       toast.success('Stripe conectado com sucesso! ✓');
-      
+
       // Navegar para próxima tela
-      router.push('/to/kyc');
+      router.push('/cadastro/to/kyc');
       
     } catch (error) {
       toast.error('Erro ao conectar com Stripe. Tente novamente.');
@@ -77,7 +77,7 @@ export default function IntegracaoStripe() {
     
     tomadorOnboardingStorage.saveStep(3, data);
     toast.warning('Você precisará conectar o Stripe depois para solicitar crédito');
-    router.push('/to/kyc');
+    router.push('/cadastro/to/kyc');
   };
 
   return (

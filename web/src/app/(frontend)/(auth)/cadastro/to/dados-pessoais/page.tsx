@@ -77,9 +77,9 @@ export default function DadosPessoais() {
     tomadorOnboardingStorage.saveStep(1, data);
 
     toast.success('Dados pessoais salvos com sucesso!');
-    
+
     // Navegar para próxima tela
-    router.push('/to/dados-empresa');
+    router.push('/cadastro/to/dados-empresa');
   };
 
   return (

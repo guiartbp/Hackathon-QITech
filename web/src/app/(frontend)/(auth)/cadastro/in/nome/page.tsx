@@ -48,7 +48,7 @@ export default function CadastroNome() {
     toast.success('Dados salvos com sucesso!');
     
     // Navegar
-    router.push('/cadastro/celular');
+    router.push('/cadastro/in/celular');
   };
 
   return (

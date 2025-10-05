@@ -44,7 +44,7 @@ export default function CadastroPerfilInvestidor() {
   // Proteção de rota e carregamento
   useEffect(() => {
     if (!onboardingStorage.validateStepAccess(5)) {
-      router.push('/cadastro/nome');
+      router.push('/cadastro/in/nome');
       return;
     }
 
@@ -84,7 +84,7 @@ export default function CadastroPerfilInvestidor() {
     onboardingStorage.saveStep(5, data);
     toast.success('Perfil de investidor salvo!');
     
-    router.push('/cadastro/termos_consentimento');
+    router.push('/cadastro/in/termos_consentimento');
   };
 
   return (

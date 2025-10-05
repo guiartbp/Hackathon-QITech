@@ -1,6 +1,7 @@
 'use client'
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 import LoginOptionals from "@/components/auth/LoginOptionals";
 
@@ -22,6 +23,7 @@ interface CadastroFormProps {
 }
 
 function CadastroForm({ isDarkBackground = true, onUserTypeChange }: CadastroFormProps = {}) {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -47,18 +49,24 @@ function CadastroForm({ isDarkBackground = true, onUserTypeChange }: CadastroFor
         email,
         password,
         userType, // Pass userType directly as an additional field
-        callbackURL: "/",
       });
 
       if (result.error) {
-        toast.error((result.error?.message || 'Erro desconhecido'))
+        toast.error((result.error?.message || 'Erro desconhecido'));
+        setLoading(false);
       } else {
-        // Success! User created and will be redirected
+        // Success! User created, now redirect based on userType
         toast.success('Cadastro realizado com sucesso!');
+
+        // Manual redirect to appropriate onboarding flow
+        const redirectPath = userType === 'investor'
+          ? '/cadastro/in/nome'
+          : '/cadastro/to/dados-pessoais';
+
+        router.push(redirectPath);
       }
     } catch (error) {
-      toast.error('Erro: ' + String(error))
-    } finally {
+      toast.error('Erro: ' + String(error));
       setLoading(false);
     }
   };

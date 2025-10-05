@@ -26,7 +26,7 @@ export default function CadastroCelular() {
   // Proteção de rota
   useEffect(() => {
     if (!onboardingStorage.validateStepAccess(2)) {
-      router.push('/cadastro/nome');
+      router.push('/cadastro/in/nome');
       return;
     }
 
@@ -63,7 +63,7 @@ export default function CadastroCelular() {
     toast.success('Contatos salvos com sucesso!');
     
     // Navegar
-    router.push('/cadastro/documento');
+    router.push('/cadastro/in/documento');
   };
 
   return (

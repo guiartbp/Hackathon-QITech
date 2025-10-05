@@ -48,7 +48,7 @@ export default function DadosEmpresa() {
   // Proteção de rota
   useEffect(() => {
     if (!tomadorOnboardingStorage.validateStepAccess(2)) {
-      router.push('/to/dados-pessoais');
+      router.push('/cadastro/to/dados-pessoais');
       return;
     }
 
@@ -154,9 +154,9 @@ export default function DadosEmpresa() {
     tomadorOnboardingStorage.saveStep(2, data);
 
     toast.success('Dados da empresa salvos com sucesso!');
-    
+
     // Navegar para próxima tela
-    router.push('/to/integracao-stripe');
+    router.push('/cadastro/to/integracao-stripe');
   };
 
   return (
