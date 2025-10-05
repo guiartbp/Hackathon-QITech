@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { auth } from "./auth";
-import type { Role } from "./generated/prisma";
+
+type Role = "ADMIN" | "SUPER_ADMIN" | "USER";
 
 // Configuration for different page types
 const ROUTE_CONFIG = {
   authRequired: [
-    "/aprender",
     "/dashboard",
     "/perfil",
     "/settings",
@@ -19,7 +19,6 @@ const ROUTE_CONFIG = {
   
   redirectIfAuth: [
     "/login",
-    "/cadastro",
   ],
   
   // Special routes with custom logic
@@ -72,7 +71,7 @@ export async function middleware(request: NextRequest) {
   
   if (matchesAnyPattern(pathname, ROUTE_CONFIG.redirectIfAuth)) {
     if (isAuthenticated) {
-      return NextResponse.redirect(new URL("/aprender", request.url));
+      return NextResponse.redirect(new URL("/dashboard", request.url));
     }
     return NextResponse.next();
   }
